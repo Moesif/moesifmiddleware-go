@@ -98,9 +98,7 @@
 		// Add transactionId to the headers
 		if !disableTransactionId {
 			// Try to fetch the transactionId from the header
-			reqTransId := request.Header.Get("X-Moesif-Transaction-Id")
-			// Set the transationId
-			transationId := reqTransId
+			transationId := request.Header.Get("X-Moesif-Transaction-Id")
 			// Check if need to generate transactionId
 			if len(transationId) == 0 {
 				transationId, _ = uuid()
