@@ -98,18 +98,18 @@
 		// Add transactionId to the headers
 		if !disableTransactionId {
 			// Try to fetch the transactionId from the header
-			transationId := request.Header.Get("X-Moesif-Transaction-Id")
+			transactionId := request.Header.Get("X-Moesif-Transaction-Id")
 			// Check if need to generate transactionId
-			if len(transationId) == 0 {
-				transationId, _ = uuid()
+			if len(transactionId) == 0 {
+				transactionId, _ = uuid()
 			}
 			
-			if len(transationId) != 0 {
+			if len(transactionId) != 0 {
 				// Add transationId to the request header
-				request.Header.Set("X-Moesif-Transaction-Id", transationId)
+				request.Header.Set("X-Moesif-Transaction-Id", transactionId)
 
 				// Add transationId to the response header
-				rw.Header().Add("X-Moesif-Transaction-Id", transationId)
+				rw.Header().Add("X-Moesif-Transaction-Id", transactionId)
 			}
 		}
 
