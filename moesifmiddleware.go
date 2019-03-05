@@ -11,6 +11,8 @@
 	 moesifapi "github.com/moesif/moesifapi-go"
 	 "github.com/moesif/moesifapi-go/models"
 	 "time"
+	 "fmt"
+	 "crypto/rand"
  )
  
  // Global variable
@@ -19,8 +21,8 @@
  )
  
  // Initialize the client
- func moesifClient(moesifOption map[interface{}]string) {
-	 api := moesifapi.NewAPI(moesifOption["Application_Id"])
+ func moesifClient(moesifOption map[string]interface{}) {
+	 api := moesifapi.NewAPI(moesifOption["Application_Id"].(string))
 	 apiClient = api
  }
  
@@ -32,6 +34,17 @@
 	 header map[string][]string
  }
  
+ // Function to generate UUID
+ func uuid() (string, error) {
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:]), nil
+}
+
  // Response Recorder
  func responseRecorder(rw http.ResponseWriter, status int, writer io.Writer) moesifResponseRecorder{
 	 rr := moesifResponseRecorder{
@@ -60,7 +73,7 @@
  }
  
  // Moesif Middleware
- func MoesifMiddleware(next http.Handler, moesifOption map[interface{}]string) http.Handler {
+ func MoesifMiddleware(next http.Handler, moesifOption map[string]interface{}) http.Handler {
 	 return http.HandlerFunc(func(rw http.ResponseWriter, request *http.Request) {
 		 // Buffer
 		 var buf bytes.Buffer
@@ -74,6 +87,33 @@
 			 200,
 			 multiWriter,
 		 )
+
+		// Disable TransactionId by default
+		disableTransactionId := false
+		// Try to fetch the disableTransactionId from the option
+		if isEnabled, found := moesifOption["disableTransactionId"].(bool); found {
+			disableTransactionId = isEnabled
+		}
+
+		// Add transactionId to the headers
+		if !disableTransactionId {
+			// Try to fetch the transactionId from the header
+			reqTransId := request.Header.Get("X-Moesif-Transaction-Id")
+			// Set the transationId
+			transationId := reqTransId
+			// Check if need to generate transactionId
+			if len(transationId) == 0 {
+				transationId, _ = uuid()
+			}
+			
+			if len(transationId) != 0 {
+				// Add transationId to the request header
+				request.Header.Set("X-Moesif-Transaction-Id", transationId)
+
+				// Add transationId to the response header
+				rw.Header().Add("X-Moesif-Transaction-Id", transationId)
+			}
+		}
 
 		 // Request Time
 		 requestTime := time.Now().UTC()
