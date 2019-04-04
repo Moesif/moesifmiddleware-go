@@ -128,15 +128,16 @@
 		 // Call the function to initialize the moesif client
 		 if apiClient == nil {
 			moesifClient(moesifOption)
+		 }
 		
 		debug = false
 		if isDebug, found := moesifOption["Debug"].(bool); found {
 				debug = isDebug
-		}}
+		}
 
 		shouldSkip := false
 		if _, found := moesifOption["Should_Skip"]; found {
-				shouldSkip = moesifOption["Should_Skip"].(func(*http.Request) bool)(request)
+			shouldSkip = moesifOption["Should_Skip"].(func(*http.Request, MoesifResponseRecorder) bool)(request, response)
 		}
 
 		if shouldSkip {
