@@ -41,11 +41,11 @@ and returns true if you want to skip this particular event.
 
 #### __`Get_Metadata`__
 (optional) _(request, response) => dictionary_, a function that takes a request and response, and
-returns a dictionary (must be able to be encoded into JSON). This allows your
+returns a dictionary (must be able to be encoded into JSON). This allows you
 to associate this event with custom metadata. For example, you may want to save a VM instance_id, a trace_id, or a tenant_id with the request.
 
 #### __`Get_Session_Token`__
-(optional) _(request, response) => string_, a function that takes a request and response, and returns a string that is the session token for this event. Again, Moesif tries to get the session token automatically, but if you setup is very different from standard, this function will be very help for tying events together, and help you replay the events.
+(optional) _(request, response) => string_, a function that takes a request and response, and returns a string that is the session token for this event. Moesif tries to get the session token automatically, but if this doesn't work for your service, you should use this to identify sessions.
 
 #### __`Mask_Event_Model`__
 (optional) _(EventModel) => EventModel_, a function that takes an EventModel and returns an EventModel with desired data removed. The return value must be a valid EventModel required by Moesif data ingestion API. For details regarding EventModel please see the [Moesif Golang API Documentation](https://www.moesif.com/docs/api?go).
