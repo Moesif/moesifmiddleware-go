@@ -13,11 +13,14 @@
 	 "time"
 	 "fmt"
 	 "crypto/rand"
+	 "io/ioutil"
+	 "encoding/json"
  )
  
  // Global variable
  var (
 	 apiClient moesifapi.API
+	 debug bool
  )
  
  // Initialize the client
@@ -27,7 +30,7 @@
  }
  
  // Moesif Response Recorder
- type moesifResponseRecorder struct {
+ type MoesifResponseRecorder struct {
 	 rw http.ResponseWriter
 	 status int
 	 writer io.Writer
@@ -46,8 +49,8 @@
 }
 
  // Response Recorder
- func responseRecorder(rw http.ResponseWriter, status int, writer io.Writer) moesifResponseRecorder{
-	 rr := moesifResponseRecorder{
+ func responseRecorder(rw http.ResponseWriter, status int, writer io.Writer) MoesifResponseRecorder{
+	 rr := MoesifResponseRecorder{
 		 rw,
 		 status,
 		 writer,
@@ -57,18 +60,18 @@
  }
  
  // Implementing the WriteHeader method of ResponseWriter Interface
- func (rec *moesifResponseRecorder) WriteHeader(code int) {
+ func (rec *MoesifResponseRecorder) WriteHeader(code int) {
 	 rec.status = code
 	 rec.rw.WriteHeader(code)
  }
  
  // Implementing the Write method of ResponseWriter Interface
- func (rec *moesifResponseRecorder) Write(b []byte) (int, error){
+ func (rec *MoesifResponseRecorder) Write(b []byte) (int, error){
 	 return rec.writer.Write(b)
  }
  
  // Implementing the Header method of ResponseWriter Interface
- func (rec *moesifResponseRecorder) Header() http.Header{
+ func (rec *MoesifResponseRecorder) Header() http.Header{
 	 return rec.rw.Header()
  }
  
@@ -125,46 +128,109 @@
 		 // Call the function to initialize the moesif client
 		 if apiClient == nil {
 			moesifClient(moesifOption)
-		 }
- 
-		 // Call the function to send event to Moesif
-		 sendEvent(request, response, buf.String(), requestTime, responseTime)
+		
+		debug = false
+		if isDebug, found := moesifOption["Debug"].(bool); found {
+				debug = isDebug
+		}}
+
+		shouldSkip := false
+		if _, found := moesifOption["Should_Skip"]; found {
+				shouldSkip = moesifOption["Should_Skip"].(func(*http.Request) bool)(request)
+		}
+
+		if shouldSkip {
+			if debug{
+				log.Printf("Skip sending the event to Moesif")
+			}
+		} else {
+			if debug {
+				log.Printf("Sending the event to Moesif")
+			}
+			// Call the function to send event to Moesif
+			sendEvent(request, response, buf.String(), requestTime, responseTime, moesifOption)
+		}
 	 })
  }
  
  // Sending event to Moesif
- func sendEvent(request *http.Request, response moesifResponseRecorder, rspBody string, reqTime time.Time, rspTime time.Time) {
+ func sendEvent(request *http.Request, response MoesifResponseRecorder, rspBody string, reqTime time.Time, rspTime time.Time, moesifOption map[string]interface{}) {
+	 // Get Api Version
+	 var apiVersion *string = nil
+	 if isApiVersion, found := moesifOption["Api_Version"].(string); found {
+		 apiVersion = &isApiVersion
+	 }
+
+	 // Get Request Body
+	 var reqBody interface{}
+	 readReqBody, reqBodyErr := ioutil.ReadAll(request.Body)
+	 if reqBodyErr != nil {	
+		 log.Printf("Error while reading request body: %s.\n", reqBodyErr.Error())
+	 }
+
+	 if jsonMarshalErr := json.Unmarshal(readReqBody, &reqBody); jsonMarshalErr != nil {
+		 log.Printf("Error while parsing request body: %s.\n", jsonMarshalErr.Error())
+		 reqBody = nil
+	 }
  
+	 // Get URL Scheme
+	 if request.URL.Scheme == "" {
+		 request.URL.Scheme = "http"
+	 }
+
+	 // Get Metadata
+	 var metadata map[string]interface{} = nil
+	 if _, found := moesifOption["Get_Metadata"]; found {
+		 metadata = moesifOption["Get_Metadata"].(func(*http.Request, MoesifResponseRecorder) map[string]interface{})(request, response)
+	 }
+
+	 // Get User
+	 var userId string
+	 if _, found := moesifOption["Identify_User"]; found {
+		 userId = moesifOption["Identify_User"].(func(*http.Request, MoesifResponseRecorder) string)(request, response)
+	 }
+
+	 // Get Session Token
+	 var sessionToken string
+	 if _, found := moesifOption["Get_Session_Token"]; found {
+		 sessionToken = moesifOption["Get_Session_Token"].(func(*http.Request, MoesifResponseRecorder) string)(request, response)
+	 }
+
 	 // Prepare request model
 	 event_request := models.EventRequestModel{
 		 Time:       &reqTime,
-		 Uri:        request.Host + request.RequestURI,
+		 Uri:        request.URL.Scheme + "://" + request.Host + request.URL.Path,
 		 Verb:       request.Method,
-		 ApiVersion: nil,
-		 IpAddress:  nil,
+		 ApiVersion: apiVersion,
+		 IpAddress:  &request.RemoteAddr,
 		 Headers:    request.Header,
-		 Body: 		 nil,
-		 }
+		 Body: 		 &reqBody,
+	 }
 
-	// Prepare response model
-	event_response := models.EventResponseModel{
-		Time:      &rspTime,
-		Status:    response.status,
-		IpAddress: nil,
-		Headers:   response.Header(),
-		Body: 	   rspBody,
-	}
+	 // Prepare response model
+	 event_response := models.EventResponseModel{
+		 Time:      &rspTime,
+		 Status:    response.status,
+		 IpAddress: nil,
+		 Headers:   response.Header(),
+		 Body: 	   rspBody,
+	 }
 	 
 	 // Prepare the event model
 	 event := models.EventModel{
 		 Request:      event_request,
 		 Response:     event_response,
-		 SessionToken: nil,
+		 SessionToken: &sessionToken,
 		 Tags:         nil,
-		 UserId:       nil,
-		 Metadata: 	   nil,
+		 UserId:       &userId,
+		 Metadata: 	   metadata,
 	 }
  
+	 // Execute mask event model function
+	 if _, found := moesifOption["Mask_Event_Model"]; found {
+		 event = moesifOption["Mask_Event_Model"].(func(models.EventModel) models.EventModel)(event)
+	 } 
+
 	 // Add event to the queue
 	 err := apiClient.QueueEvent(&event)
 	 
@@ -172,6 +238,8 @@
 	 if err != nil {
 		 log.Fatalf("Error while adding event to Moesif: %s.\n", err.Error())
 	 } else {
-		 log.Println("Event successfully added to the queue")
+		if debug{
+			log.Println("Event successfully added to the queue")
+		}
 	 }
  }
