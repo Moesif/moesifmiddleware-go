@@ -224,6 +224,7 @@
 		 SessionToken: &sessionToken,
 		 Tags:         nil,
 		 UserId:       &userId,
+		 CompanyId:    nil,
 		 Metadata: 	   metadata,
 	 }
  
