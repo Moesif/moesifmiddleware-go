@@ -24,6 +24,7 @@
 #   go-tests = true
 #   unused-packages = true
 
+ignored = ["github.com/moesif/moesifapi-go*"]
 
 [[constraint]]
   name = "github.com/moesif/moesifapi-go"
