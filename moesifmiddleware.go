@@ -14,6 +14,7 @@
 	 "crypto/rand"
 	 "io/ioutil"
 	 "encoding/json"
+	 b64 "encoding/base64"
  )
  
  // Global variable
@@ -175,7 +176,7 @@
  }
  
  // Sending event to Moesif
- func sendEvent(request *http.Request, response MoesifResponseRecorder, rspBody string, reqTime time.Time, rspTime time.Time) {
+ func sendEvent(request *http.Request, response MoesifResponseRecorder, rspBufferString string, reqTime time.Time, rspTime time.Time) {
 	 // Get Api Version
 	 var apiVersion *string = nil
 	 if isApiVersion, found := moesifOption["Api_Version"].(string); found {
@@ -184,6 +185,7 @@
 
 	 // Get Request Body
 	 var reqBody interface{}
+	 var reqEncoding string
 	 readReqBody, reqBodyErr := ioutil.ReadAll(request.Body)
 	 if reqBodyErr != nil {	
 		 if debug{
@@ -194,13 +196,38 @@
 	 // Check if the request body is empty
 	 reqBody = nil
 	 if (len(readReqBody)) > 0 {
+		reqEncoding = "json"
 		if jsonMarshalErr := json.Unmarshal(readReqBody, &reqBody); jsonMarshalErr != nil {
 			if debug {
-				log.Printf("Error while parsing request body: %s.\n", jsonMarshalErr.Error())
+				log.Printf("About to parse request body as base64 ")
 			}
-			reqBody = nil
+			reqBody = b64.StdEncoding.EncodeToString(readReqBody)
+			reqEncoding = "base64"
+			if debug {
+				log.Printf("Parsed request body as base64 - %s", reqBody)
+			}
 		}
 	 } 
+
+	 // Get the response body
+	 var respBody interface{}
+	 var respEncoding string
+
+	 // Parse the response Body
+	 respBody = nil
+	 respEncoding = "json"
+	 if jsonRespParseErr := json.Unmarshal([]byte(rspBufferString), &respBody); jsonRespParseErr != nil {
+		 if debug {
+			 log.Printf("About to parse outgoing response body as base64 ")
+		 }
+		 // Base64 Encode data
+		 respBody = b64.StdEncoding.EncodeToString([]byte(rspBufferString))
+		 respEncoding = "base64"
+		 if debug {
+			 log.Printf("Parsed outgoing response body as base64 - %s", respBody)
+		 }
+	 }
+
  
 	 // Get URL Scheme
 	 if request.URL.Scheme == "" {
@@ -226,5 +253,5 @@
 	 }
 
 	 // Send Event To Moesif
-	 sendMoesifAsync(request, reqTime, apiVersion, reqBody, rspTime, response.status, response.Header(), rspBody, &userId, &sessionToken, metadata)
+	 sendMoesifAsync(request, reqTime, apiVersion, reqBody, &reqEncoding, rspTime, response.status, response.Header(), respBody, &respEncoding, &userId, &sessionToken, metadata)
  }
