@@ -8,8 +8,8 @@ import (
 )
 
 // Send Event to Moesif
-func sendMoesifAsync(request *http.Request, reqTime time.Time, apiVersion *string, reqBody interface{}, 
-					 rspTime time.Time, respStatus int, respHeader http.Header, respBody interface{},
+func sendMoesifAsync(request *http.Request, reqTime time.Time, apiVersion *string, reqBody interface{}, reqEncoding *string,
+					 rspTime time.Time, respStatus int, respHeader http.Header, respBody interface{}, respEncoding *string,
 					 userId *string, sessionToken *string, metadata map[string]interface{}) {
 	
 	// Prepare request model
@@ -21,6 +21,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, apiVersion *strin
 		IpAddress:  nil,
 		Headers:    request.Header,
 		Body: 		&reqBody,
+		TransferEncoding: reqEncoding,
 	}
 
 	// Prepare response model
@@ -30,6 +31,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, apiVersion *strin
 		IpAddress: nil,
 		Headers:   respHeader,
 		Body: 	   respBody,
+		TransferEncoding: respEncoding,
 	}
 	
 	// Prepare the event model

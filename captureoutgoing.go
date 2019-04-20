@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"bytes"
+	b64 "encoding/base64"
 )
 
 // Transport implements http.RoundTripper.
@@ -57,20 +58,22 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			log.Printf("Skip sending the outgoing event to Moesif")
 		}
 	} else {
-		if debug {
-			log.Printf("Sending the outgoing event to Moesif")
-		}
 		
 		// Check if the event is to Moesif
 		if !(strings.Contains(request.URL.String(), "moesif.net")) {
-		
+
+			if debug {
+				log.Printf("Sending the outgoing event to Moesif")
+			}
+
 			// Get Request Body
 			var outgoingReqBody interface{}
+			var reqEncoding string
 			if request.Body != nil {
 				copyBody, err := request.GetBody()
 				if err != nil {
 					if debug{
-						log.Printf("Error while getting the request body: %s.\n", err.Error())
+						log.Printf("Error while getting the outgoing request body: %s.\n", err.Error())
 					}
 				}
 			
@@ -78,16 +81,21 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 				readReqBody, reqBodyErr := ioutil.ReadAll(copyBody)
 				if reqBodyErr != nil {	
 					if debug {
-						log.Printf("Error while reading request body: %s.\n", reqBodyErr.Error())
+						log.Printf("Error while reading outgoing request body: %s.\n", reqBodyErr.Error())
 					}
 				}
 			
 				// Parse the request Body
-				if jsonMarshalErr := json.Unmarshal(readReqBody, &outgoingReqBody); jsonMarshalErr != nil {
+				reqEncoding = "json"
+				if jsonReqParseErr := json.Unmarshal(readReqBody, &outgoingReqBody); jsonReqParseErr != nil {
 					if debug {
-						log.Printf("Error while parsing request body: %s.\n", jsonMarshalErr.Error())
+						log.Printf("About to parse outgoing request body as base64 ")
 					}
-					outgoingReqBody = nil
+					outgoingReqBody = b64.StdEncoding.EncodeToString(readReqBody)
+					reqEncoding = "base64"
+					if debug {
+						log.Printf("Parsed outgoing request body as base64 - %s", outgoingReqBody)
+					}
 				}
 			
 				// Return io.ReadCloser while making sure a Close() is available for request body
@@ -96,27 +104,44 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			} else {
 				// Empty Request body
 				outgoingReqBody = nil
+				reqEncoding = ""
 			}
-		
+  
 			// Get Response Body
 			var outgoingRespBody interface{}
+			var respEncoding string
 			if response.Body != nil {
 				// Read the response body
-				bodyBytes, err := ioutil.ReadAll(response.Body)
+				readRespBody, err := ioutil.ReadAll(response.Body)
 				if err != nil {
 					if debug {
-						log.Printf("Error while reading response body: %s.\n", err.Error())
+						log.Printf("Error while reading outgoing response body: %s.\n", err.Error())
 					}
 				}
-			 
-				// Convert response body into string
-				outgoingRespBody = string(bodyBytes)
+
+				// Parse the response Body
+				respEncoding = "json"
+				if jsonRespParseErr := json.Unmarshal(readRespBody, &outgoingRespBody); jsonRespParseErr != nil {
+					if debug {
+						log.Printf("About to parse outgoing response body as base64 ")
+					}
+					// Base64 Encode data
+					outgoingRespBody = b64.StdEncoding.EncodeToString(readRespBody)
+					respEncoding = "base64"
+					if debug {
+						log.Printf("Parsed outgoing response body as base64 - %s", outgoingRespBody)
+					}
+				}
 	
 				// Return io.ReadCloser while making sure a Close() is available for response body
-				response.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+				response.Body = ioutil.NopCloser(bytes.NewBuffer(readRespBody))
 			} else {
+				if debug {
+					log.Printf("Error while parsing outgoing response body ")
+				}
 				// Empty response Body
 				outgoingRespBody = nil
+				respEncoding = ""
 			}
 			
 		
@@ -139,8 +164,8 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			}
 
 			// Send Event To Moesif
-			sendMoesifAsync(request, outgoingReqTime, nil, outgoingReqBody, outgoingRspTime, response.StatusCode, 
-							response.Header, outgoingRespBody, &userIdOutgoing, &sessionTokenOutgoing, metadataOutgoing)
+			sendMoesifAsync(request, outgoingReqTime, nil, outgoingReqBody, &reqEncoding, outgoingRspTime, response.StatusCode, 
+							response.Header, outgoingRespBody, &respEncoding, &userIdOutgoing, &sessionTokenOutgoing, metadataOutgoing)
 			
 			} else {
 				if debug {
