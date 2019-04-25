@@ -12,13 +12,16 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, apiVersion *strin
 					 rspTime time.Time, respStatus int, respHeader http.Header, respBody interface{}, respEncoding *string,
 					 userId *string, sessionToken *string, metadata map[string]interface{}) {
 	
+	// Get Client Ip
+	ip := getClientIp(request)
+	
 	// Prepare request model
 	event_request := models.EventRequestModel{
 		Time:       &reqTime,
 		Uri:        request.URL.Scheme + "://" + request.Host + request.URL.Path,
 		Verb:       request.Method,
 		ApiVersion: apiVersion,
-		IpAddress:  nil,
+		IpAddress:  &ip,
 		Headers:    request.Header,
 		Body: 		&reqBody,
 		TransferEncoding: reqEncoding,
