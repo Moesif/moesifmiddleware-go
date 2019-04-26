@@ -169,7 +169,7 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			
 			} else {
 				if debug {
-					log.Println("Skip sending Moesif Event")
+					log.Println("Request Skipped since it is Moesif Event")
 				}	
 			}
 	}
