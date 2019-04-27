@@ -8,10 +8,7 @@ import (
 
 func validIp(ipAddress string) bool {
 	ip := net.ParseIP(ipAddress)
-	if ip.To4() != nil || ip.To16()!= nil {
-		return true
-	}
-	return false
+	return ip.To4() != nil || ip.To16()!= nil 
 }
 
 func getClientIpFromXForwardedFor(ipAddress string) string {

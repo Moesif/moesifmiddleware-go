@@ -15,6 +15,20 @@ Run the following commands:
 go get github.com/moesif/moesifmiddleware-go
 ```
 
+## How to add middleware to your application
+
+Add middleware to your application.
+
+```go
+http.Handle(pattern string, moesifmiddleware.MoesifMiddleware(http.HandlerFunc(handle), moesifOption))
+```
+
+#### handler func(ResponseWriter, *Request)
+(__required__), HandlerFunc registers the handler function for the given pattern.
+
+#### moesifOption
+(__required__), _map[string]interface{}_, are the configuration options for your application. Please find the details below on how to configure options.
+
 ## Configuration options
 
 Please note the request is the original http.Request and the response is moesifResponseRecorder.
