@@ -110,20 +110,12 @@
  // Start Capture Outgoing Request
  func StartCaptureOutgoing(configurationOption map[string]interface{}) {
 
-	 // Disable Capture outgoing by default
-	 startCaptureOutgoing := false
-	 // Try to fetch the Capture Outgoing Request from the option
-	 if isEnabled, found := configurationOption["Capture_Outoing_Requests"].(bool); found {
-		 startCaptureOutgoing = isEnabled
-	 }
-
-	 if startCaptureOutgoing {
-		// Call the function to initialize the moesif client and moesif options
-		if apiClient == nil {
-			moesifClient(configurationOption)
-		}
-	} else {
-		log.Println("Please set the Capture_Outoing_Requests option to true to start capturing outgoing request")
+	// Call the function to initialize the moesif client and moesif options
+	if apiClient == nil {
+		// Set the Capture_Outoing_Requests to true to capture outgoing request
+		configurationOption["Capture_Outoing_Requests"] = true
+		// log.Println("Configuration option %s", configurationOption)
+		moesifClient(configurationOption)
 	}
  }
  
