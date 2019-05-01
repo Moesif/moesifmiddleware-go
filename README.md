@@ -89,6 +89,183 @@ to associate this event with custom metadata. For example, you may want to save 
 ##### __`Mask_Event_Model_Outgoing`__
 (optional) _(EventModel) => EventModel_, a function that takes an EventModel and returns an EventModel with desired data removed. The return value must be a valid EventModel required by Moesif data ingestion API. For details regarding EventModel please see the [Moesif Golang API Documentation](https://www.moesif.com/docs/api?go).
 
+## Update User
+
+### UpdateUser method
+A method is attached to the moesif middleware object to update the user profile or metadata.
+The metadata field can be any custom data you want to set on the user. The `UserId` field is required.
+
+```go
+import (
+	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
+)
+
+var moesifOptions = map[string]interface{} {
+	"Application_Id": "Moesif Application Id",
+}
+
+// Modified Time
+modifiedTime := time.Now().UTC()
+
+// User Metadata
+metadata := map[string]interface{}{
+	"email": "johndoe1@acmeinc.com",
+	"Key1": "metadata",
+	"Key2": 42,
+	"Key3": map[string]interface{}{
+		"Key3_1": "SomeValue",
+	},
+}
+
+// Prepare user model
+user := models.UserModel{
+	ModifiedTime: 	  &modifiedTime,
+	SessionToken:     nil,
+	IpAddress:		  nil,
+	UserId:			  "golangapiuser",	
+	UserAgentString:  nil,
+	Metadata:		  &metadata,
+}
+
+// Update User
+moesifmiddleware.UpdateUser(&user, moesifOption)
+```
+
+### UpdateUsersBatch method
+A method is attached to the moesif middleware object to update the users profile or metadata in batch.
+The metadata field can be any custom data you want to set on the user. The `UserId` field is required.
+
+```go
+
+import (
+	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
+)
+
+var moesifOptions = map[string]interface{} {
+	"Application_Id": "Moesif Application Id",
+}
+
+// Batch Users
+var users []*models.UserModel
+
+// Modified Time
+modifiedTime := time.Now().UTC()
+
+// User Metadata
+metadata := map[string]interface{}{
+	"email": "johndoe1@acmeinc.com",
+	"Key1": "metadata",
+	"Key2": 42,
+	"Key3": map[string]interface{}{
+		"Key3_1": "SomeValue",
+	},
+}
+
+// Prepare user model
+userA := models.UserModel{
+	ModifiedTime: 	  &modifiedTime,
+	SessionToken:     nil,
+	IpAddress:		  nil,
+	UserId:			  "golangapiuser",	
+	UserAgentString:  nil,
+	Metadata:		  &metadata,
+}
+
+users = append(users, &userA)
+
+// Update User
+moesifmiddleware.UpdateUsersBatch(users, moesifOption)
+```
+
+## Update Company
+
+### UpdateCompany method
+A method is attached to the moesif middleware object to update the company profile or metadata.
+The metadata field can be any custom data you want to set on the company. The `CompanyId` field is required.
+
+```go
+import (
+	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
+)
+
+var moesifOptions = map[string]interface{} {
+	"Application_Id": "Moesif Application Id",
+}
+
+// Modified Time
+modifiedTime := time.Now().UTC()
+
+// User Metadata
+metadata := map[string]interface{}{
+	"email": "johndoe1@acmeinc.com",
+	"Key1": "metadata",
+	"Key2": 42,
+	"Key3": map[string]interface{}{
+		"Key3_1": "SomeValue",
+	},
+}
+
+// Prepare company model
+company := models.CompanyModel{
+	ModifiedTime: 	  &modifiedTime,
+	SessionToken:     nil,
+	IpAddress:		  nil,
+	CompanyId:		  "1",	
+	CompanyDomain:    nil,
+	Metadata:		  &metadata,
+}
+
+// Update Company
+moesifmiddleware.UpdateCompany(&company, moesifOption)
+```
+
+### UpdateCompaniesBatch method
+A method is attached to the moesif middleware object to update the companies profile or metadata in batch.
+The metadata field can be any custom data you want to set on the company. The `CompanyId` field is required.
+
+
+```go
+
+import (
+	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
+)
+
+var moesifOptions = map[string]interface{} {
+	"Application_Id": "Moesif Application Id",
+}
+
+// Batch Companies
+var companies []*models.CompanyModel
+
+// Modified Time
+modifiedTime := time.Now().UTC()
+
+// Company Metadata
+metadata := map[string]interface{}{
+	"email": "johndoe1@acmeinc.com",
+	"Key1": "metadata",
+	"Key2": 42,
+	"Key3": map[string]interface{}{
+		"Key3_1": "SomeValue",
+	},
+}
+
+// Prepare company model
+companyA := models.CompanyModel{
+	ModifiedTime: 	  &modifiedTime,
+	SessionToken:     nil,
+	IpAddress:		  nil,
+	CompanyId:		  "1",	
+	CompanyDomain:    nil,
+	Metadata:		  &metadata,
+}
+
+companies = append(companies, &companyA)
+
+// Update Companies
+moesifmiddleware.UpdateCompaniesBatch(companies, moesifOption)
+```
+
 ## Example
 An example app with Moesif integration is available __[on GitHub](https://github.com/Moesif/moesifmiddleware-go-example).__
 

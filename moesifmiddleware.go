@@ -9,6 +9,7 @@
 	 "bytes"
 	 "io"
 	 moesifapi "github.com/moesif/moesifapi-go"
+	 "github.com/moesif/moesifapi-go/models"
 	 "time"
 	 "fmt"
 	 "crypto/rand"
@@ -114,11 +115,82 @@
 	if apiClient == nil {
 		// Set the Capture_Outoing_Requests to true to capture outgoing request
 		configurationOption["Capture_Outoing_Requests"] = true
-		// log.Println("Configuration option %s", configurationOption)
 		moesifClient(configurationOption)
 	}
  }
  
+ // Update User
+ func UpdateUser(user *models.UserModel, configurationOption map[string]interface{}) {
+	 
+	// Call the function to initialize the moesif client and moesif options
+	if apiClient == nil {
+		moesifClient(configurationOption)
+	}
+
+	// Add event to the queue
+	errUpdateUser := apiClient.QueueUser(user)
+	// Log the message
+	if errUpdateUser != nil {
+		log.Fatalf("Error while updating user: %s.\n", errUpdateUser.Error())
+	} else {
+		log.Println("Update User successfully added to the queue")
+	}
+ }
+
+ // Update Users Batch
+ func UpdateUsersBatch(users []*models.UserModel, configurationOption map[string]interface{}) {
+	 
+	// Call the function to initialize the moesif client and moesif options
+	if apiClient == nil {
+		moesifClient(configurationOption)
+	}
+
+	// Add event to the queue
+	errUpdateUserBatch := apiClient.QueueUsers(users)
+	// Log the message
+	if errUpdateUserBatch != nil {
+		log.Fatalf("Error while updating users in batch: %s.\n", errUpdateUserBatch.Error())
+	} else {
+		log.Println("Updated Users successfully added to the queue")
+	}
+ }
+
+ // Update Company
+ func UpdateCompany(company *models.CompanyModel, configurationOption map[string]interface{}) {
+	 
+	// Call the function to initialize the moesif client and moesif options
+	if apiClient == nil {
+		moesifClient(configurationOption)
+	}
+
+	// Add event to the queue
+	errUpdateCompany := apiClient.QueueCompany(company)
+	// Log the message
+	if errUpdateCompany != nil {
+		log.Fatalf("Error while updating company: %s.\n", errUpdateCompany.Error())
+	} else {
+		log.Println("Update Company successfully added to the queue")
+	}
+ }
+
+ // Update Companies Batch
+ func UpdateCompaniesBatch(companies []*models.CompanyModel, configurationOption map[string]interface{}) {
+	 
+	// Call the function to initialize the moesif client and moesif options
+	if apiClient == nil {
+		moesifClient(configurationOption)
+	}
+
+	// Add event to the queue
+	errUpdateCompaniesBatch := apiClient.QueueCompanies(companies)
+	// Log the message
+	if errUpdateCompaniesBatch != nil {
+		log.Fatalf("Error while updating companies in batch: %s.\n", errUpdateCompaniesBatch.Error())
+	} else {
+		log.Println("Updated companies successfully added to the queue")
+	}
+ }
+
  // Moesif Middleware
  func MoesifMiddleware(next http.Handler, configurationOption map[string]interface{}) http.Handler {
 	 return http.HandlerFunc(func(rw http.ResponseWriter, request *http.Request) {
