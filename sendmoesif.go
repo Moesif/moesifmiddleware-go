@@ -10,7 +10,7 @@ import (
 // Send Event to Moesif
 func sendMoesifAsync(request *http.Request, reqTime time.Time, apiVersion *string, reqBody interface{}, reqEncoding *string,
 					 rspTime time.Time, respStatus int, respHeader http.Header, respBody interface{}, respEncoding *string,
-					 userId *string, sessionToken *string, metadata map[string]interface{}) {
+					 userId *string, companyId *string, sessionToken *string, metadata map[string]interface{}) {
 	
 	// Get Client Ip
 	ip := getClientIp(request)
@@ -44,7 +44,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, apiVersion *strin
 		SessionToken: sessionToken,
 		Tags:         nil,
 		UserId:       userId,
-		CompanyId:    nil,
+		CompanyId:    companyId,
 		Metadata: 	  metadata,
 	}
 

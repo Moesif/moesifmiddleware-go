@@ -156,6 +156,12 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			if _, found := moesifOption["Identify_User_Outgoing"]; found {
 				userIdOutgoing = moesifOption["Identify_User_Outgoing"].(func(*http.Request, *http.Response) string)(request, response)
 			}
+
+			// Get Outgoing Company
+			var companyIdOutgoing string
+			if _, found := moesifOption["Identify_Company_Outgoing"]; found {
+				companyIdOutgoing = moesifOption["Identify_Company_Outgoing"].(func(*http.Request, *http.Response) string)(request, response)
+			}
 		
 			// Get Outgoing Session Token
 			var sessionTokenOutgoing string
@@ -165,7 +171,7 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 
 			// Send Event To Moesif
 			sendMoesifAsync(request, outgoingReqTime, nil, outgoingReqBody, &reqEncoding, outgoingRspTime, response.StatusCode, 
-							response.Header, outgoingRespBody, &respEncoding, &userIdOutgoing, &sessionTokenOutgoing, metadataOutgoing)
+							response.Header, outgoingRespBody, &respEncoding, &userIdOutgoing, &companyIdOutgoing, &sessionTokenOutgoing, metadataOutgoing)
 			
 			} else {
 				if debug {

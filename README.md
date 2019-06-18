@@ -53,6 +53,9 @@ and returns true if you want to skip this particular event.
 #### __`Identify_User`__
 (optional, but highly recommended) _(request, response) => string_, a function that takes a request and response, and returns a string that is the user id used by your system. While Moesif tries to identify users automatically, but different frameworks and your implementation might be very different, it would be helpful and much more accurate to provide this function.
 
+#### __`Identify_Company`__
+(optional) _(request, response) => string_, a function that takes a request and response, and returns a string that is the company id for this event.
+
 #### __`Get_Metadata`__
 (optional) _(request, response) => dictionary_, a function that takes a request and response, and
 returns a dictionary (must be able to be encoded into JSON). This allows you
@@ -77,6 +80,9 @@ When the request is outgoing, for options functions that take request and respon
 ##### __`Identify_User_Outgoing`__
 (optional, but highly recommended) _(request, response) => string_, a function that takes request and response, and returns a string that is the user id used by your system. While Moesif tries to identify users automatically,
 but different frameworks and your implementation might be very different, it would be helpful and much more accurate to provide this function.
+
+##### __`Identify_Company_Outgoing`__
+(optional) _(request, response) => string_, a function that takes request and response, and returns a string that is the company id for this event.
 
 ##### __`Get_Metadata_Outgoing`__
 (optional) _(request, response) => dictionary_, a function that takes request and response, and
