@@ -115,7 +115,8 @@
 	if apiClient == nil {
 		// Set the Capture_Outoing_Requests to true to capture outgoing request
 		configurationOption["Capture_Outoing_Requests"] = true
-		moesifClient(configurationOption)
+		moesifOption = configurationOption
+		moesifClient(moesifOption)
 	}
  }
  
@@ -330,6 +331,12 @@
 		 userId = moesifOption["Identify_User"].(func(*http.Request, MoesifResponseRecorder) string)(request, response)
 	 }
 
+	 // Get Company
+	 var companyId string
+	 if _, found := moesifOption["Identify_Company"]; found {
+		 companyId = moesifOption["Identify_Company"].(func(*http.Request, MoesifResponseRecorder) string)(request, response)
+	 }
+
 	 // Get Session Token
 	 var sessionToken string
 	 if _, found := moesifOption["Get_Session_Token"]; found {
@@ -337,5 +344,5 @@
 	 }
 
 	 // Send Event To Moesif
-	 sendMoesifAsync(request, reqTime, apiVersion, reqBody, &reqEncoding, rspTime, response.status, response.Header(), respBody, &respEncoding, &userId, &sessionToken, metadata)
+	 sendMoesifAsync(request, reqTime, apiVersion, reqBody, &reqEncoding, rspTime, response.status, response.Header(), respBody, &respEncoding, &userId, &companyId, &sessionToken, metadata)
  }
