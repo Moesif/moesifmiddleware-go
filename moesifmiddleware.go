@@ -25,6 +25,8 @@
 	 moesifOption map[string]interface{}
 	 disableCaptureOutgoing bool
 	 disableTransactionId bool
+	 logBody bool
+	 logBodyOutgoing bool
  )
  
  // Initialize the client
@@ -50,6 +52,13 @@
 		if debug {
 			log.Println("Start Capturing outgoing requests")
 		}
+		// Enable logBody by default
+		logBodyOutgoing = true
+		// Try to fetch the disableTransactionId from the option
+		if isEnabled, found := moesifOption["Log_Body_Outgoing"].(bool); found {
+			logBodyOutgoing = isEnabled
+		}
+
 		http.DefaultTransport = DefaultTransport
 	}
 
@@ -60,6 +69,12 @@
 		 disableTransactionId = isEnabled
 	 }
 
+	 // Enable logBody by default
+	 logBody = true
+	 // Try to fetch the disableTransactionId from the option
+	 if isEnabled, found := moesifOption["Log_Body"].(bool); found {
+		 logBody = isEnabled
+	 }
  }
  
  // Moesif Response Recorder
@@ -280,7 +295,7 @@
 
 	 // Check if the request body is empty
 	 reqBody = nil
-	 if (len(readReqBody)) > 0 {
+	 if logBody && (len(readReqBody)) > 0 {
 		reqEncoding = "json"
 		if jsonMarshalErr := json.Unmarshal(readReqBody, &reqBody); jsonMarshalErr != nil {
 			if debug {
@@ -300,17 +315,19 @@
 
 	 // Parse the response Body
 	 respBody = nil
-	 respEncoding = "json"
-	 if jsonRespParseErr := json.Unmarshal([]byte(rspBufferString), &respBody); jsonRespParseErr != nil {
-		 if debug {
-			 log.Printf("About to parse outgoing response body as base64 ")
-		 }
-		 // Base64 Encode data
-		 respBody = b64.StdEncoding.EncodeToString([]byte(rspBufferString))
-		 respEncoding = "base64"
-		 if debug {
-			 log.Printf("Parsed outgoing response body as base64 - %s", respBody)
-		 }
+	 if logBody {
+		respEncoding = "json"
+		if jsonRespParseErr := json.Unmarshal([]byte(rspBufferString), &respBody); jsonRespParseErr != nil {
+			if debug {
+				log.Printf("About to parse outgoing response body as base64 ")
+			}
+			// Base64 Encode data
+			respBody = b64.StdEncoding.EncodeToString([]byte(rspBufferString))
+			respEncoding = "base64"
+			if debug {
+				log.Printf("Parsed outgoing response body as base64 - %s", respBody)
+			}
+		}
 	 }
 
  
