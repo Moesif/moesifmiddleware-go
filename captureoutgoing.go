@@ -69,7 +69,8 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			// Get Request Body
 			var outgoingReqBody interface{}
 			var reqEncoding string
-			if request.Body != nil {
+			outgoingReqBody = nil
+			if logBodyOutgoing && request.Body != nil {
 				copyBody, err := request.GetBody()
 				if err != nil {
 					if debug{
@@ -101,16 +102,13 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 				// Return io.ReadCloser while making sure a Close() is available for request body
 				request.Body = ioutil.NopCloser(bytes.NewBuffer(readReqBody))
 			
-			} else {
-				// Empty Request body
-				outgoingReqBody = nil
-				reqEncoding = ""
 			}
   
 			// Get Response Body
 			var outgoingRespBody interface{}
 			var respEncoding string
-			if response.Body != nil {
+			outgoingRespBody = nil
+			if logBodyOutgoing && response.Body != nil {
 				// Read the response body
 				readRespBody, err := ioutil.ReadAll(response.Body)
 				if err != nil {
@@ -135,13 +133,6 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 	
 				// Return io.ReadCloser while making sure a Close() is available for response body
 				response.Body = ioutil.NopCloser(bytes.NewBuffer(readRespBody))
-			} else {
-				if debug {
-					log.Printf("Error while parsing outgoing response body ")
-				}
-				// Empty response Body
-				outgoingRespBody = nil
-				respEncoding = ""
 			}
 			
 		
