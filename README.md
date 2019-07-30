@@ -4,7 +4,7 @@
 [![Software License][ico-license]][link-license]
 [![Source Code][ico-source]][link-source]
 
-Send API call data to [Moesif API Analytics](https://www.moesif.com/)
+Go Middleware that logs API Calls and sends to [Moesif](https://www.moesif.com) for API analytics and log analysis.
 
 [Source Code on GitHub](https://github.com/moesif/moesifmiddleware-go)
 
@@ -15,36 +15,49 @@ Run the following commands:
 go get github.com/moesif/moesifmiddleware-go
 ```
 
-## How to add middleware to your application
+## How to use
 
 Add middleware to your application.
 
 ```go
-http.Handle(pattern string, moesifmiddleware.MoesifMiddleware(http.HandlerFunc(handle), moesifOption))
+import(
+    moesifmiddleware "github.com/moesif/moesifmiddleware-go"
+)
+
+func handle(w http.ResponseWriter, r *http.Request) {
+	// Your API Logic
+}
+
+var moesifOptions = map[string]interface{} {
+        "Application_Id": "Your Moesif Application Id",
+        "Log_Body": true,
+}
+http.Handle("/api", moesifmiddleware.MoesifMiddleware(http.HandlerFunc(handle), moesifOption))
 ```
 
-#### handler func(ResponseWriter, *Request)
+## Optional: Capturing outgoing API calls
+In addition to your own APIs, you can also start capturing calls out to third party services via the following method:
+
+```go
+moesifmiddleware.StartCaptureOutgoing(moesifOption)
+```
+
+#### `handler func(ResponseWriter, *Request)`
 (__required__), HandlerFunc registers the handler function for the given pattern.
 
-#### moesifOption
+#### `moesifOption`
 (__required__), _map[string]interface{}_, are the configuration options for your application. Please find the details below on how to configure options.
 
 ## Configuration options
 
-Please note the request is the original http.Request and the response is moesifResponseRecorder.
-
-```go
-// Moesif Response Recorder
- type MoesifResponseRecorder struct {
-	 rw http.ResponseWriter
-	 status int
-	 writer io.Writer
-	 header map[string][]string
- }
-```
-
 #### __`Application_Id`__
 (__required__), _string_, is obtained via your Moesif Account, this is required.
+Your Moesif Application Id can be found in the [_Moesif Portal_](https://www.moesif.com/).
+After signing up for a Moesif account, your Moesif Application Id will be displayed during the onboarding steps. 
+
+You can always find your Moesif Application Id at any time by logging 
+into the [_Moesif Portal_](https://www.moesif.com/), click on the top right menu,
+and then clicking _Installation_.
 
 #### __`Should_Skip`__
 (optional) _(request, response) => boolean_, a function that takes a request and a response,
@@ -113,7 +126,7 @@ import (
 )
 
 var moesifOptions = map[string]interface{} {
-	"Application_Id": "Moesif Application Id",
+	"Application_Id": "Your Moesif Application Id",
 	"Log_Body": true,
 }
 
