@@ -11,8 +11,16 @@ Go Middleware that logs API Calls and sends to [Moesif](https://www.moesif.com) 
 ## How to install
 Run the following commands:
 
-```shell
+`moesifmiddleware-go` can be installed like any other Go library through go get:
+
+```bash
 go get github.com/moesif/moesifmiddleware-go
+```
+
+Or, if you are already using Go Modules, specify a version number as well:
+
+```bash
+go get github.com/moesif/moesifmiddleware-go@v1.0.2
 ```
 
 ## How to use
