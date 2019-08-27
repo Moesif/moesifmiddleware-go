@@ -151,12 +151,16 @@ metadata := map[string]interface{}{
 	},
 }
 
+// Company Id associated with the user
+companyId := "67890"
+
 // Prepare user model
 user := models.UserModel{
 	ModifiedTime: 	  &modifiedTime,
 	SessionToken:     nil,
 	IpAddress:		  nil,
-	UserId:			  "golangapiuser",	
+	UserId:			  "12345",	
+	CompanyId:        &companyId,
 	UserAgentString:  nil,
 	Metadata:		  &metadata,
 }
@@ -195,12 +199,16 @@ metadata := map[string]interface{}{
 	},
 }
 
+// Company Id associated with the user
+companyId := "67890"
+
 // Prepare user model
 userA := models.UserModel{
 	ModifiedTime: 	  &modifiedTime,
 	SessionToken:     nil,
 	IpAddress:		  nil,
-	UserId:			  "golangapiuser",	
+	UserId:			  "12345",
+	CompanyId:        &companyId,	
 	UserAgentString:  nil,
 	Metadata:		  &metadata,
 }
@@ -244,7 +252,7 @@ company := models.CompanyModel{
 	ModifiedTime: 	  &modifiedTime,
 	SessionToken:     nil,
 	IpAddress:		  nil,
-	CompanyId:		  "1",	
+	CompanyId:		  "12345",	
 	CompanyDomain:    nil,
 	Metadata:		  &metadata,
 }
@@ -289,7 +297,7 @@ companyA := models.CompanyModel{
 	ModifiedTime: 	  &modifiedTime,
 	SessionToken:     nil,
 	IpAddress:		  nil,
-	CompanyId:		  "1",	
+	CompanyId:		  "12345",	
 	CompanyDomain:    nil,
 	Metadata:		  &metadata,
 }
@@ -305,7 +313,7 @@ An example app with Moesif integration is available __[on GitHub](https://github
 
 ## Other integrations
 
-To view more more documentation on integration options, please visit __[the Integration Options Documentation](https://www.moesif.com/docs/getting-started/integration-options/).__
+To view more documentation on integration options, please visit __[the Integration Options Documentation](https://www.moesif.com/docs/getting-started/integration-options/).__
 
 [ico-built-for]: https://img.shields.io/badge/built%20for-go-blue.svg
 [ico-license]: https://img.shields.io/badge/License-Apache%202.0-green.svg
