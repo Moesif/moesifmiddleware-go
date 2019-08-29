@@ -43,6 +43,9 @@ var moesifOptions = map[string]interface{} {
 http.Handle("/api", moesifmiddleware.MoesifMiddleware(http.HandlerFunc(handle), moesifOption))
 ```
 
+Your Moesif Application Id can be found in the [_Moesif Portal_](https://www.moesif.com/).
+After signing up for a Moesif account, your Moesif Application Id will be displayed during the onboarding steps. 
+
 ## Optional: Capturing outgoing API calls
 In addition to your own APIs, you can also start capturing calls out to third party services via the following method:
 
