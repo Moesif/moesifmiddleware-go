@@ -128,8 +128,11 @@ to associate this event with custom metadata. For example, you may want to save 
 ## Update User
 
 ### UpdateUser method
-A method is attached to the moesif middleware object to update the user profile or metadata.
-The metadata field can be any custom data you want to set on the user. The `UserId` field is required.
+Create or update a user profile in Moesif.
+The metadata field can be any customer demographic or other info you want to store.
+Only the `UserId` field is required.
+This method is a convenient helper that calls the Moesif API lib.
+For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-a-user).
 
 ```go
 import (
@@ -141,31 +144,35 @@ var moesifOptions = map[string]interface{} {
 	"Log_Body": true,
 }
 
-// Modified Time
-modifiedTime := time.Now().UTC()
-
-// User Metadata
+// Campaign object is optional, but useful if you want to track ROI of acquisition channels
+// See https://www.moesif.com/docs/api#users for campaign schema
+campaign := models.CampaignModel {
+  UtmSource: "google",
+  UtmMedium: "cpc", 
+  UtmCampaign: "adwords",
+  UtmTerm: "api+tooling",
+  UtmContent: "landing",
+}
+  
+// metadata can be any custom dictionary
 metadata := map[string]interface{}{
-	"email": "johndoe1@acmeinc.com",
-	"Key1": "metadata",
-	"Key2": 42,
-	"Key3": map[string]interface{}{
-		"Key3_1": "SomeValue",
-	},
+  "email", "john@acmeinc.com",
+  "first_name", "John",
+  "last_name", "Doe",
+  "title", "Software Engineer",
+  "sales_info", map[string]interface{}{
+      "stage", "Customer",
+      "lifetime_value", 24000,
+      "account_owner", "mary@contoso.com",
+  },
 }
 
-// Company Id associated with the user
-companyId := "67890"
-
-// Prepare user model
+// Only UserId is required
 user := models.UserModel{
-	ModifiedTime: 	  &modifiedTime,
-	SessionToken:     nil,
-	IpAddress:		  nil,
-	UserId:			  "12345",	
-	CompanyId:        &companyId,
-	UserAgentString:  nil,
-	Metadata:		  &metadata,
+  UserId:  "12345",
+  CompanyId:  "67890", // If set, associate user with a company object
+  Campaign:  &campaign,
+  Metadata:  &metadata,
 }
 
 // Update User
@@ -173,8 +180,10 @@ moesifmiddleware.UpdateUser(&user, moesifOption)
 ```
 
 ### UpdateUsersBatch method
-A method is attached to the moesif middleware object to update the users profile or metadata in batch.
-The metadata field can be any custom data you want to set on the user. The `UserId` field is required.
+Similar to UpdateUser, but used to update a list of users in one batch. 
+Only the `UserId` field is required.
+This method is a convenient helper that calls the Moesif API lib.
+For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-users-in-batch).
 
 ```go
 
@@ -183,37 +192,41 @@ import (
 )
 
 var moesifOptions = map[string]interface{} {
-	"Application_Id": "Moesif Application Id",
+	"Application_Id": "Your Moesif Application Id",
 }
 
-// Batch Users
+// List of Users
 var users []*models.UserModel
 
-// Modified Time
-modifiedTime := time.Now().UTC()
-
-// User Metadata
+// Campaign object is optional, but useful if you want to track ROI of acquisition channels
+// See https://www.moesif.com/docs/api#users for campaign schema
+campaign := models.CampaignModel {
+  UtmSource: "google",
+  UtmMedium: "cpc", 
+  UtmCampaign: "adwords",
+  UtmTerm: "api+tooling",
+  UtmContent: "landing",
+}
+  
+// metadata can be any custom dictionary
 metadata := map[string]interface{}{
-	"email": "johndoe1@acmeinc.com",
-	"Key1": "metadata",
-	"Key2": 42,
-	"Key3": map[string]interface{}{
-		"Key3_1": "SomeValue",
-	},
+  "email", "john@acmeinc.com",
+  "first_name", "John",
+  "last_name", "Doe",
+  "title", "Software Engineer",
+  "sales_info", map[string]interface{}{
+      "stage", "Customer",
+      "lifetime_value", 24000,
+      "account_owner", "mary@contoso.com",
+  },
 }
 
-// Company Id associated with the user
-companyId := "67890"
-
-// Prepare user model
+// Only UserId is required
 userA := models.UserModel{
-	ModifiedTime: 	  &modifiedTime,
-	SessionToken:     nil,
-	IpAddress:		  nil,
-	UserId:			  "12345",
-	CompanyId:        &companyId,	
-	UserAgentString:  nil,
-	Metadata:		  &metadata,
+  UserId:  "12345",
+  CompanyId:  "67890", // If set, associate user with a company object
+  Campaign:  &campaign,
+  Metadata:  &metadata,
 }
 
 users = append(users, &userA)
@@ -225,8 +238,11 @@ moesifmiddleware.UpdateUsersBatch(users, moesifOption)
 ## Update Company
 
 ### UpdateCompany method
-A method is attached to the moesif middleware object to update the company profile or metadata.
-The metadata field can be any custom data you want to set on the company. The `CompanyId` field is required.
+Create or update a company profile in Moesif.
+The metadata field can be any company demographic or other info you want to store.
+Only the `CompanyId` field is required.
+This method is a convenient helper that calls the Moesif API lib.
+For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-a-company).
 
 ```go
 import (
@@ -234,29 +250,36 @@ import (
 )
 
 var moesifOptions = map[string]interface{} {
-	"Application_Id": "Moesif Application Id",
+	"Application_Id": "Your Moesif Application Id",
 }
 
-// Modified Time
-modifiedTime := time.Now().UTC()
-
-// User Metadata
+// Campaign object is optional, but useful if you want to track ROI of acquisition channels
+// See https://www.moesif.com/docs/api#update-a-company for campaign schema
+campaign := models.CampaignModel {
+  UtmSource: "google",
+  UtmMedium: "cpc", 
+  UtmCampaign: "adwords",
+  UtmTerm: "api+tooling",
+  UtmContent: "landing",
+}
+  
+// metadata can be any custom dictionary
 metadata := map[string]interface{}{
-	"email": "johndoe1@acmeinc.com",
-	"Key1": "metadata",
-	"Key2": 42,
-	"Key3": map[string]interface{}{
-		"Key3_1": "SomeValue",
-	},
+  "org_name", "Acme, Inc",
+  "plan_name", "Free",
+  "deal_stage", "Lead",
+  "mrr", 24000,
+  "demographics", map[string]interface{}{
+      "alexa_ranking", 500000,
+      "employee_count", 47,
+  },
 }
 
 // Prepare company model
 company := models.CompanyModel{
-	ModifiedTime: 	  &modifiedTime,
-	SessionToken:     nil,
-	IpAddress:		  nil,
-	CompanyId:		  "12345",	
-	CompanyDomain:    nil,
+	CompanyId:		  "67890",	// The only required field is your company id
+	CompanyDomain:    "acmeinc.com", // If domain is set, Moesif will enrich your profiles with publicly available info 
+	Campaign: 		  &campaign,
 	Metadata:		  &metadata,
 }
 
@@ -265,9 +288,10 @@ moesifmiddleware.UpdateCompany(&company, moesifOption)
 ```
 
 ### UpdateCompaniesBatch method
-A method is attached to the moesif middleware object to update the companies profile or metadata in batch.
-The metadata field can be any custom data you want to set on the company. The `CompanyId` field is required.
-
+Similar to UpdateCompany, but used to update a list of companies in one batch. 
+Only the `CompanyId` field is required.
+This method is a convenient helper that calls the Moesif API lib.
+For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-companies-in-batch).
 
 ```go
 
@@ -276,32 +300,39 @@ import (
 )
 
 var moesifOptions = map[string]interface{} {
-	"Application_Id": "Moesif Application Id",
+	"Application_Id": "Your Moesif Application Id",
 }
 
-// Batch Companies
+// List of Companies
 var companies []*models.CompanyModel
 
-// Modified Time
-modifiedTime := time.Now().UTC()
-
-// Company Metadata
+// Campaign object is optional, but useful if you want to track ROI of acquisition channels
+// See https://www.moesif.com/docs/api#update-a-company for campaign schema
+campaign := models.CampaignModel {
+  UtmSource: "google",
+  UtmMedium: "cpc", 
+  UtmCampaign: "adwords",
+  UtmTerm: "api+tooling",
+  UtmContent: "landing",
+}
+  
+// metadata can be any custom dictionary
 metadata := map[string]interface{}{
-	"email": "johndoe1@acmeinc.com",
-	"Key1": "metadata",
-	"Key2": 42,
-	"Key3": map[string]interface{}{
-		"Key3_1": "SomeValue",
-	},
+  "org_name", "Acme, Inc",
+  "plan_name", "Free",
+  "deal_stage", "Lead",
+  "mrr", 24000,
+  "demographics", map[string]interface{}{
+      "alexa_ranking", 500000,
+      "employee_count", 47,
+  },
 }
 
 // Prepare company model
 companyA := models.CompanyModel{
-	ModifiedTime: 	  &modifiedTime,
-	SessionToken:     nil,
-	IpAddress:		  nil,
-	CompanyId:		  "12345",	
-	CompanyDomain:    nil,
+	CompanyId:		  "67890",	// The only required field is your company id
+	CompanyDomain:    "acmeinc.com", // If domain is set, Moesif will enrich your profiles with publicly available info 
+	Campaign: 		  &campaign,
 	Metadata:		  &metadata,
 }
 
