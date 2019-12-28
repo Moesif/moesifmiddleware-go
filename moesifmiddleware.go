@@ -360,6 +360,9 @@
 		 sessionToken = moesifOption["Get_Session_Token"].(func(*http.Request, MoesifResponseRecorder) string)(request, response)
 	 }
 
+	 direction := "Incoming"
+	 weight := 1
+
 	 // Send Event To Moesif
-	 sendMoesifAsync(request, reqTime, apiVersion, reqBody, &reqEncoding, rspTime, response.status, response.Header(), respBody, &respEncoding, &userId, &companyId, &sessionToken, metadata)
+	 sendMoesifAsync(request, reqTime, apiVersion, reqBody, &reqEncoding, rspTime, response.status, response.Header(), respBody, &respEncoding, &userId, &companyId, &sessionToken, metadata, &direction, &weight)
  }

@@ -160,9 +160,13 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 				sessionTokenOutgoing = moesifOption["Get_Session_Token_Outgoing"].(func(*http.Request, *http.Response) string)(request, response)
 			}
 
+			direction := "Outgoing"
+	 		weight := 1
+
 			// Send Event To Moesif
 			sendMoesifAsync(request, outgoingReqTime, nil, outgoingReqBody, &reqEncoding, outgoingRspTime, response.StatusCode, 
-							response.Header, outgoingRespBody, &respEncoding, &userIdOutgoing, &companyIdOutgoing, &sessionTokenOutgoing, metadataOutgoing)
+							response.Header, outgoingRespBody, &respEncoding, &userIdOutgoing, &companyIdOutgoing, &sessionTokenOutgoing, metadataOutgoing,
+							&direction, &weight)
 			
 			} else {
 				if debug {
