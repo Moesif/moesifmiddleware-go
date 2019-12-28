@@ -20,7 +20,7 @@ go get github.com/moesif/moesifmiddleware-go
 Or, if you are already using Go Modules, specify a version number as well:
 
 ```bash
-go get github.com/moesif/moesifmiddleware-go@v1.0.2
+go get github.com/moesif/moesifmiddleware-go@v1.0.4
 ```
 
 ## How to use
