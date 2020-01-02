@@ -139,6 +139,10 @@ import (
 	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
 )
 
+func literalFieldValue(value string) *string {
+    return &value
+}
+
 var moesifOptions = map[string]interface{} {
 	"Application_Id": "Your Moesif Application Id",
 	"Log_Body": true,
@@ -147,30 +151,30 @@ var moesifOptions = map[string]interface{} {
 // Campaign object is optional, but useful if you want to track ROI of acquisition channels
 // See https://www.moesif.com/docs/api#users for campaign schema
 campaign := models.CampaignModel {
-  UtmSource: "google",
-  UtmMedium: "cpc", 
-  UtmCampaign: "adwords",
-  UtmTerm: "api+tooling",
-  UtmContent: "landing",
+  UtmSource: literalFieldValue("google"),
+  UtmMedium: literalFieldValue("cpc"), 
+  UtmCampaign: literalFieldValue("adwords"),
+  UtmTerm: literalFieldValue("api+tooling"),
+  UtmContent: literalFieldValue("landing"),
 }
   
 // metadata can be any custom dictionary
 metadata := map[string]interface{}{
-  "email", "john@acmeinc.com",
-  "first_name", "John",
-  "last_name", "Doe",
-  "title", "Software Engineer",
-  "sales_info", map[string]interface{}{
-      "stage", "Customer",
-      "lifetime_value", 24000,
-      "account_owner", "mary@contoso.com",
+  "email": "john@acmeinc.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "title": "Software Engineer",
+  "sales_info": map[string]interface{}{
+      "stage": "Customer",
+      "lifetime_value": 24000,
+      "account_owner": "mary@contoso.com",
   },
 }
 
 // Only UserId is required
 user := models.UserModel{
   UserId:  "12345",
-  CompanyId:  "67890", // If set, associate user with a company object
+  CompanyId:  literalFieldValue("67890"), // If set, associate user with a company object
   Campaign:  &campaign,
   Metadata:  &metadata,
 }
@@ -191,6 +195,10 @@ import (
 	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
 )
 
+func literalFieldValue(value string) *string {
+    return &value
+}
+
 var moesifOptions = map[string]interface{} {
 	"Application_Id": "Your Moesif Application Id",
 }
@@ -201,30 +209,30 @@ var users []*models.UserModel
 // Campaign object is optional, but useful if you want to track ROI of acquisition channels
 // See https://www.moesif.com/docs/api#users for campaign schema
 campaign := models.CampaignModel {
-  UtmSource: "google",
-  UtmMedium: "cpc", 
-  UtmCampaign: "adwords",
-  UtmTerm: "api+tooling",
-  UtmContent: "landing",
+  UtmSource: literalFieldValue("google"),
+  UtmMedium: literalFieldValue("cpc"), 
+  UtmCampaign: literalFieldValue("adwords"),
+  UtmTerm: literalFieldValue("api+tooling"),
+  UtmContent: literalFieldValue("landing"),
 }
   
 // metadata can be any custom dictionary
 metadata := map[string]interface{}{
-  "email", "john@acmeinc.com",
-  "first_name", "John",
-  "last_name", "Doe",
-  "title", "Software Engineer",
-  "sales_info", map[string]interface{}{
-      "stage", "Customer",
-      "lifetime_value", 24000,
-      "account_owner", "mary@contoso.com",
+  "email": "john@acmeinc.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "title": "Software Engineer",
+  "sales_info": map[string]interface{}{
+      "stage": "Customer",
+      "lifetime_value": 24000,
+      "account_owner": "mary@contoso.com",
   },
 }
 
 // Only UserId is required
 userA := models.UserModel{
   UserId:  "12345",
-  CompanyId:  "67890", // If set, associate user with a company object
+  CompanyId:  literalFieldValue("67890"), // If set, associate user with a company object
   Campaign:  &campaign,
   Metadata:  &metadata,
 }
@@ -249,6 +257,10 @@ import (
 	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
 )
 
+func literalFieldValue(value string) *string {
+    return &value
+}
+
 var moesifOptions = map[string]interface{} {
 	"Application_Id": "Your Moesif Application Id",
 }
@@ -256,31 +268,31 @@ var moesifOptions = map[string]interface{} {
 // Campaign object is optional, but useful if you want to track ROI of acquisition channels
 // See https://www.moesif.com/docs/api#update-a-company for campaign schema
 campaign := models.CampaignModel {
-  UtmSource: "google",
-  UtmMedium: "cpc", 
-  UtmCampaign: "adwords",
-  UtmTerm: "api+tooling",
-  UtmContent: "landing",
+  UtmSource: literalFieldValue("google"),
+  UtmMedium: literalFieldValue("cpc"), 
+  UtmCampaign: literalFieldValue("adwords"),
+  UtmTerm: literalFieldValue("api+tooling"),
+  UtmContent: literalFieldValue("landing"),
 }
   
 // metadata can be any custom dictionary
 metadata := map[string]interface{}{
-  "org_name", "Acme, Inc",
-  "plan_name", "Free",
-  "deal_stage", "Lead",
-  "mrr", 24000,
-  "demographics", map[string]interface{}{
-      "alexa_ranking", 500000,
-      "employee_count", 47,
+  "org_name": "Acme, Inc",
+  "plan_name": "Free",
+  "deal_stage": "Lead",
+  "mrr": 24000,
+  "demographics": map[string]interface{}{
+      "alexa_ranking": 500000,
+      "employee_count": 47,
   },
 }
 
 // Prepare company model
 company := models.CompanyModel{
 	CompanyId:		  "67890",	// The only required field is your company id
-	CompanyDomain:    "acmeinc.com", // If domain is set, Moesif will enrich your profiles with publicly available info 
+	CompanyDomain:  literalFieldValue("acmeinc.com"), // If domain is set, Moesif will enrich your profiles with publicly available info 
 	Campaign: 		  &campaign,
-	Metadata:		  &metadata,
+	Metadata:		    &metadata,
 }
 
 // Update Company
@@ -299,6 +311,10 @@ import (
 	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
 )
 
+func literalFieldValue(value string) *string {
+    return &value
+}
+
 var moesifOptions = map[string]interface{} {
 	"Application_Id": "Your Moesif Application Id",
 }
@@ -309,31 +325,31 @@ var companies []*models.CompanyModel
 // Campaign object is optional, but useful if you want to track ROI of acquisition channels
 // See https://www.moesif.com/docs/api#update-a-company for campaign schema
 campaign := models.CampaignModel {
-  UtmSource: "google",
-  UtmMedium: "cpc", 
-  UtmCampaign: "adwords",
-  UtmTerm: "api+tooling",
-  UtmContent: "landing",
+  UtmSource: literalFieldValue("google"),
+  UtmMedium: literalFieldValue("cpc"), 
+  UtmCampaign: literalFieldValue("adwords"),
+  UtmTerm: literalFieldValue("api+tooling"),
+  UtmContent: literalFieldValue("landing"),
 }
   
 // metadata can be any custom dictionary
 metadata := map[string]interface{}{
-  "org_name", "Acme, Inc",
-  "plan_name", "Free",
-  "deal_stage", "Lead",
-  "mrr", 24000,
-  "demographics", map[string]interface{}{
-      "alexa_ranking", 500000,
-      "employee_count", 47,
+  "org_name": "Acme, Inc",
+  "plan_name": "Free",
+  "deal_stage": "Lead",
+  "mrr": 24000,
+  "demographics": map[string]interface{}{
+      "alexa_ranking": 500000,
+      "employee_count": 47,
   },
 }
 
 // Prepare company model
 companyA := models.CompanyModel{
 	CompanyId:		  "67890",	// The only required field is your company id
-	CompanyDomain:    "acmeinc.com", // If domain is set, Moesif will enrich your profiles with publicly available info 
+	CompanyDomain:  literalFieldValue("acmeinc.com"), // If domain is set, Moesif will enrich your profiles with publicly available info 
 	Campaign: 		  &campaign,
-	Metadata:		  &metadata,
+	Metadata:		    &metadata,
 }
 
 companies = append(companies, &companyA)
