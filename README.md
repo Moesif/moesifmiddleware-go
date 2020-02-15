@@ -99,6 +99,8 @@ to associate this event with custom metadata. For example, you may want to save 
 
 ## Options for logging outgoing calls
 
+The options below are applied to outgoing API calls. The request and response objects passed in are [Request](https://golang.org/src/net/http/request.go) request and [Response](https://golang.org/src/net/http/response.go) response objects.
+
 ### __`Should_Skip_Outgoing`__
 (optional) _(request, response) => boolean_, a function that takes a request and response, and returns true if you want to skip this particular event.
 
