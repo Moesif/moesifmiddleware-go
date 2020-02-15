@@ -41,27 +41,6 @@
 	 		debug = isDebug
 	 }
 
-	 // Disable Capture outgoing by default
-	 disableCaptureOutgoing = false
-	 // Try to fetch the Capture Outgoing Request from the option
-	 if isEnabled, found := moesifOption["Capture_Outoing_Requests"].(bool); found {
-		 disableCaptureOutgoing = isEnabled
-	 }
-
-	 if disableCaptureOutgoing {
-		if debug {
-			log.Println("Start Capturing outgoing requests")
-		}
-		// Enable logBody by default
-		logBodyOutgoing = true
-		// Try to fetch the disableTransactionId from the option
-		if isEnabled, found := moesifOption["Log_Body_Outgoing"].(bool); found {
-			logBodyOutgoing = isEnabled
-		}
-
-		http.DefaultTransport = DefaultTransport
-	}
-
 	 // Disable TransactionId by default
 	 disableTransactionId = false
 	 // Try to fetch the disableTransactionId from the option
@@ -133,6 +112,18 @@
 		moesifOption = configurationOption
 		moesifClient(moesifOption)
 	}
+
+	if debug {
+		log.Println("Start Capturing outgoing requests")
+	}
+	// Enable logBody by default
+	logBodyOutgoing = true
+	// Try to fetch the disableTransactionId from the option
+	if isEnabled, found := moesifOption["Log_Body_Outgoing"].(bool); found {
+		logBodyOutgoing = isEnabled
+	}
+
+	http.DefaultTransport = DefaultTransport
  }
  
  // Update User

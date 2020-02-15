@@ -10,7 +10,7 @@
   ]
   pruneopts = "UT"
   revision = "5707e881a41db7abb0a0095bba9b3c2ce1faf701"
-  version = "1.0.3"
+  version = "v1.0.3"
 
 [[projects]]
   branch = "master"
@@ -21,7 +21,7 @@
     "context/ctxhttp",
   ]
   pruneopts = "UT"
-  revision = "c0dbc17a35534bf2e581d7a942408dc936316da4"
+  revision = "16171245cfb220d5317888b716d69c1fb4e7992b"
 
 [solve-meta]
   analyzer-name = "dep"
