@@ -20,7 +20,7 @@ go get github.com/moesif/moesifmiddleware-go
 Or, if you are already using Go Modules, specify a version number as well:
 
 ```bash
-go get github.com/moesif/moesifmiddleware-go@v1.0.4
+go get github.com/moesif/moesifmiddleware-go@v1.0.5
 ```
 
 ## How to use
@@ -61,7 +61,7 @@ moesifmiddleware.StartCaptureOutgoing(moesifOption)
 
 ## Configuration options
 
-#### __`Application_Id`__
+### __`Application_Id`__
 (__required__), _string_, is obtained via your Moesif Account, this is required.
 Your Moesif Application Id can be found in the [_Moesif Portal_](https://www.moesif.com/).
 After signing up for a Moesif account, your Moesif Application Id will be displayed during the onboarding steps. 
@@ -70,59 +70,57 @@ You can always find your Moesif Application Id at any time by logging
 into the [_Moesif Portal_](https://www.moesif.com/), click on the top right menu,
 and then clicking _Installation_.
 
-#### __`Should_Skip`__
+### __`Should_Skip`__
 (optional) _(request, response) => boolean_, a function that takes a request and a response,
 and returns true if you want to skip this particular event.
 
-#### __`Identify_User`__
+### __`Identify_User`__
 (optional, but highly recommended) _(request, response) => string_, a function that takes a request and response, and returns a string that is the user id used by your system. While Moesif tries to identify users automatically, but different frameworks and your implementation might be very different, it would be helpful and much more accurate to provide this function.
 
-#### __`Identify_Company`__
+### __`Identify_Company`__
 (optional) _(request, response) => string_, a function that takes a request and response, and returns a string that is the company id for this event.
 
-#### __`Get_Metadata`__
+### __`Get_Metadata`__
 (optional) _(request, response) => dictionary_, a function that takes a request and response, and
 returns a dictionary (must be able to be encoded into JSON). This allows you
 to associate this event with custom metadata. For example, you may want to save a VM instance_id, a trace_id, or a tenant_id with the request.
 
-#### __`Get_Session_Token`__
+### __`Get_Session_Token`__
 (optional) _(request, response) => string_, a function that takes a request and response, and returns a string that is the session token for this event. Moesif tries to get the session token automatically, but if this doesn't work for your service, you should use this to identify sessions.
 
-#### __`Mask_Event_Model`__
+### __`Mask_Event_Model`__
 (optional) _(EventModel) => EventModel_, a function that takes an EventModel and returns an EventModel with desired data removed. The return value must be a valid EventModel required by Moesif data ingestion API. For details regarding EventModel please see the [Moesif Golang API Documentation](https://www.moesif.com/docs/api?go).
 
-#### __`Debug`__
+### __`Debug`__
 (optional) _boolean_, a flag to see debugging messages.
 
-#### __`Log_Body`__
+### __`Log_Body`__
 (optional) _boolean_, Default true. Set to false to remove logging request and response body to Moesif.
 
-#### __`Capture_Outoing_Requests`__
-(optional) _boolean_, Default False. Set to True to capture all outgoing API calls from your app to third parties like Stripe or to your own dependencies while using [net/http](https://golang.org/pkg/net/http/) package. The options below is applied to outgoing API calls.
-When the request is outgoing, for options functions that take request and response as input arguments, the request and response objects passed in are [Request](https://golang.org/src/net/http/request.go) request and [Response](https://golang.org/src/net/http/response.go) response objects.
+## Options for logging outgoing calls
 
-##### __`Should_Skip_Outgoing`__
+### __`Should_Skip_Outgoing`__
 (optional) _(request, response) => boolean_, a function that takes a request and response, and returns true if you want to skip this particular event.
 
-##### __`Identify_User_Outgoing`__
+### __`Identify_User_Outgoing`__
 (optional, but highly recommended) _(request, response) => string_, a function that takes request and response, and returns a string that is the user id used by your system. While Moesif tries to identify users automatically,
 but different frameworks and your implementation might be very different, it would be helpful and much more accurate to provide this function.
 
-##### __`Identify_Company_Outgoing`__
+### __`Identify_Company_Outgoing`__
 (optional) _(request, response) => string_, a function that takes request and response, and returns a string that is the company id for this event.
 
-##### __`Get_Metadata_Outgoing`__
+### __`Get_Metadata_Outgoing`__
 (optional) _(request, response) => dictionary_, a function that takes request and response, and
 returns a dictionary (must be able to be encoded into JSON). This allows
 to associate this event with custom metadata. For example, you may want to save a VM instance_id, a trace_id, or a tenant_id with the request.
 
-##### __`Get_Session_Token_Outgoing`__
+### __`Get_Session_Token_Outgoing`__
 (optional) _(request, response) => string_, a function that takes request and response, and returns a string that is the session token for this event. Again, Moesif tries to get the session token automatically, but if you setup is very different from standard, this function will be very help for tying events together, and help you replay the events.
 
-##### __`Mask_Event_Model_Outgoing`__
+### __`Mask_Event_Model_Outgoing`__
 (optional) _(EventModel) => EventModel_, a function that takes an EventModel and returns an EventModel with desired data removed. The return value must be a valid EventModel required by Moesif data ingestion API. For details regarding EventModel please see the [Moesif Golang API Documentation](https://www.moesif.com/docs/api?go).
 
-##### __`Log_Body_Outgoing`__
+### __`Log_Body_Outgoing`__
 (optional) _boolean_, Default true. Set to false to remove logging request and response body to Moesif.
 
 ## Update User
