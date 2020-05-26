@@ -27,7 +27,7 @@
 
 [[constraint]]
   name = "github.com/moesif/moesifapi-go"
-  version = "1.0.3"
+  version = "1.0.4"
 
 [prune]
   go-tests = true
