@@ -1,26 +1,26 @@
 package moesifmiddleware
 
 import (
-	"net/http"
 	"net"
+	"net/http"
 	"strings"
 )
 
 func validIp(ipAddress string) bool {
 	ip := net.ParseIP(ipAddress)
-	return ip.To4() != nil || ip.To16()!= nil 
+	return ip.To4() != nil || ip.To16() != nil
 }
 
 func getClientIpFromXForwardedFor(ipAddress string) string {
-	
+
 	// Split the string
 	ips := strings.Split(ipAddress, ", ")
-	
+
 	// Sometimes IP addresses in this header can be 'unknown' (http://stackoverflow.com/a/11285650).
 	// Therefore taking the left-most IP address that is not unknown
 	// A Squid configuration directive can also set the value to "unknown" (http://www.squid-cache.org/Doc/config/forwarded_for/)
 	for _, ip := range ips {
-		
+
 		// Azure Web App's also adds a port for some reason, so we'll only use the first part (the IP)
 		if strings.Contains(ip, ":") {
 			ip = strings.Split(ip, ":")[0]
@@ -34,7 +34,7 @@ func getClientIpFromXForwardedFor(ipAddress string) string {
 		if validIp(ip) {
 			return ip
 		}
-		
+
 	}
 	// Return empty String
 	return ""
@@ -88,7 +88,7 @@ func getClientIp(request *http.Request) string {
 			return rs[0]
 		}
 	}
-	
+
 	if xf, ok := request.Header["X-Forwarded"]; ok {
 		if validIp(xf[0]) {
 			return xf[0]

@@ -2,15 +2,15 @@
 
 
 [[projects]]
-  digest = "1:97855e14d0a338ec734e0222571152ac6fdd9bd143ff182dab61fc1558ed688d"
+  digest = "1:dca729bebfccef90a95380d377e03657f1345aba84c36b6fede86c9af697e4e1"
   name = "github.com/moesif/moesifapi-go"
   packages = [
     ".",
     "models",
   ]
   pruneopts = "UT"
-  revision = "61d8434084921441c059b139a157de6446220ac7"
-  version = "v1.0.4"
+  revision = "d0fc725461d9e5315b799221cf1cebeb5e2af69b"
+  version = "v1.0.5"
 
 [[projects]]
   branch = "master"
@@ -21,7 +21,7 @@
     "context/ctxhttp",
   ]
   pruneopts = "UT"
-  revision = "0ba52f642ac2f9371a88bfdde41f4b4e195a37c0"
+  revision = "4c5254603344ea4a8ae4bed7e296a9588303e14f"
 
 [solve-meta]
   analyzer-name = "dep"
