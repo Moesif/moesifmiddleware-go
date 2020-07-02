@@ -1,15 +1,13 @@
 package moesifmiddleware
 
 import (
+	"bytes"
 	"context"
+	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 	"strings"
-	"io/ioutil"
-	"encoding/json"
-	"bytes"
-	b64 "encoding/base64"
+	"time"
 )
 
 // Transport implements http.RoundTripper.
@@ -54,11 +52,11 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 
 	// Skip / Send event to moesif
 	if shouldSkipOutgoing {
-		if debug{
+		if debug {
 			log.Printf("Skip sending the outgoing event to Moesif")
 		}
 	} else {
-		
+
 		// Check if the event is to Moesif
 		if !(strings.Contains(request.URL.String(), "moesif.net")) {
 
@@ -73,37 +71,27 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			if logBodyOutgoing && request.Body != nil {
 				copyBody, err := request.GetBody()
 				if err != nil {
-					if debug{
+					if debug {
 						log.Printf("Error while getting the outgoing request body: %s.\n", err.Error())
 					}
 				}
-			
+
 				// Read the request body
 				readReqBody, reqBodyErr := ioutil.ReadAll(copyBody)
-				if reqBodyErr != nil {	
+				if reqBodyErr != nil {
 					if debug {
 						log.Printf("Error while reading outgoing request body: %s.\n", reqBodyErr.Error())
 					}
 				}
-			
+
 				// Parse the request Body
-				reqEncoding = "json"
-				if jsonReqParseErr := json.Unmarshal(readReqBody, &outgoingReqBody); jsonReqParseErr != nil {
-					if debug {
-						log.Printf("About to parse outgoing request body as base64 ")
-					}
-					outgoingReqBody = b64.StdEncoding.EncodeToString(readReqBody)
-					reqEncoding = "base64"
-					if debug {
-						log.Printf("Parsed outgoing request body as base64 - %s", outgoingReqBody)
-					}
-				}
-			
+				outgoingReqBody, reqEncoding = parseBody(readReqBody, "Request_Body_Masks")
+
 				// Return io.ReadCloser while making sure a Close() is available for request body
 				request.Body = ioutil.NopCloser(bytes.NewBuffer(readReqBody))
-			
+
 			}
-  
+
 			// Get Response Body
 			var outgoingRespBody interface{}
 			var respEncoding string
@@ -118,61 +106,47 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 				}
 
 				// Parse the response Body
-				respEncoding = "json"
-				if jsonRespParseErr := json.Unmarshal(readRespBody, &outgoingRespBody); jsonRespParseErr != nil {
-					if debug {
-						log.Printf("About to parse outgoing response body as base64 ")
-					}
-					// Base64 Encode data
-					outgoingRespBody = b64.StdEncoding.EncodeToString(readRespBody)
-					respEncoding = "base64"
-					if debug {
-						log.Printf("Parsed outgoing response body as base64 - %s", outgoingRespBody)
-					}
-				}
-	
+				outgoingRespBody, respEncoding = parseBody(readRespBody, "Response_Body_Masks")
+
 				// Return io.ReadCloser while making sure a Close() is available for response body
 				response.Body = ioutil.NopCloser(bytes.NewBuffer(readRespBody))
 			}
-			
-		
+
 			// Get Outgoing Event Metadata
 			var metadataOutgoing map[string]interface{} = nil
 			if _, found := moesifOption["Get_Metadata_Outgoing"]; found {
 				metadataOutgoing = moesifOption["Get_Metadata_Outgoing"].(func(*http.Request, *http.Response) map[string]interface{})(request, response)
 			}
-		
+
 			// Get Outgoing User
-			var userIdOutgoing string
-			if _, found := moesifOption["Identify_User_Outgoing"]; found {
-				userIdOutgoing = moesifOption["Identify_User_Outgoing"].(func(*http.Request, *http.Response) string)(request, response)
-			}
+			userIdOutgoing := getConfigStringValuesForOutgoingEvent("Identify_User_Outgoing", request, response)
 
 			// Get Outgoing Company
-			var companyIdOutgoing string
-			if _, found := moesifOption["Identify_Company_Outgoing"]; found {
-				companyIdOutgoing = moesifOption["Identify_Company_Outgoing"].(func(*http.Request, *http.Response) string)(request, response)
-			}
-		
+			companyIdOutgoing := getConfigStringValuesForOutgoingEvent("Identify_Company_Outgoing", request, response)
+
 			// Get Outgoing Session Token
-			var sessionTokenOutgoing string
-			if _, found := moesifOption["Get_Session_Token_Outgoing"]; found {
-				sessionTokenOutgoing = moesifOption["Get_Session_Token_Outgoing"].(func(*http.Request, *http.Response) string)(request, response)
-			}
+			sessionTokenOutgoing := getConfigStringValuesForOutgoingEvent("Get_Session_Token_Outgoing", request, response)
 
 			direction := "Outgoing"
-	 		weight := 1
+
+			// Mask Request Header
+			var requestHeader map[string]interface{}
+			requestHeader = maskHeaders(HeaderToMap(request.Header), "Request_Header_Masks")
+
+			// Mask Response Header
+			var responseHeader map[string]interface{}
+			responseHeader = maskHeaders(HeaderToMap(response.Header), "Response_Header_Masks")
 
 			// Send Event To Moesif
-			sendMoesifAsync(request, outgoingReqTime, nil, outgoingReqBody, &reqEncoding, outgoingRspTime, response.StatusCode, 
-							response.Header, outgoingRespBody, &respEncoding, &userIdOutgoing, &companyIdOutgoing, &sessionTokenOutgoing, metadataOutgoing,
-							&direction, &weight)
-			
-			} else {
-				if debug {
-					log.Println("Request Skipped since it is Moesif Event")
-				}	
+			sendMoesifAsync(request, outgoingReqTime, requestHeader, nil, outgoingReqBody, &reqEncoding, outgoingRspTime, response.StatusCode,
+				responseHeader, outgoingRespBody, &respEncoding, userIdOutgoing, companyIdOutgoing, &sessionTokenOutgoing, metadataOutgoing,
+				&direction)
+
+		} else {
+			if debug {
+				log.Println("Request Skipped since it is Moesif Event")
 			}
+		}
 	}
 
 	return response, err
