@@ -365,7 +365,9 @@ moesifmiddleware.UpdateCompaniesBatch(companies, moesifOption)
 ```
 
 ## Example
-An example app with Moesif integration is available __[on GitHub](https://github.com/Moesif/moesifmiddleware-go-example).__
+
+- An example app with Moesif integration is available __[on GitHub](https://github.com/Moesif/moesifmiddleware-go-example).__
+- An example for Google Cloud Platform Serverless: __[Google Cloud Functions](https://github.com/Moesif/moesif-gcp-function-go-example)__
 
 ## Other integrations
 
