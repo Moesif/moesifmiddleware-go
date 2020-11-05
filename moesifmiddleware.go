@@ -35,7 +35,13 @@ var (
 
 // Initialize the client
 func moesifClient(moesifOption map[string]interface{}) {
-	api := moesifapi.NewAPI(moesifOption["Application_Id"].(string))
+
+	var apiEndpoint string
+	var batchSize int
+	var eventQueueSize int 
+	var timerWakeupSeconds int
+	
+	api := moesifapi.NewAPI(moesifOption["Application_Id"].(string), &apiEndpoint, eventQueueSize, batchSize, timerWakeupSeconds)
 	apiClient = api
 
 	//  Disable debug by default
