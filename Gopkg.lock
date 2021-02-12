@@ -21,7 +21,7 @@
     "context/ctxhttp",
   ]
   pruneopts = "UT"
-  revision = "ff519b6c91021e6316e1df005bc19f266994ddda"
+  revision = "5f4716e94777e714bc2fb3e3a44599cb40817aac"
 
 [solve-meta]
   analyzer-name = "dep"

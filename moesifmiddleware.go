@@ -38,9 +38,29 @@ func moesifClient(moesifOption map[string]interface{}) {
 
 	var apiEndpoint string
 	var batchSize int
-	var eventQueueSize int 
+	var eventQueueSize int
 	var timerWakeupSeconds int
-	
+
+	// Try to fetch the api endpoint
+	if endpoint, found := moesifOption["Api_Endpoint"].(string); found {
+		apiEndpoint = endpoint
+	}
+
+	// Try to fetch the event queue size
+	if queueSize, found := moesifOption["Event_Queue_Size"].(int); found {
+		eventQueueSize = queueSize
+	}
+
+	// Try to fetch the batch size
+	if batch, found := moesifOption["Batch_Size"].(int); found {
+		batchSize = batch
+	}
+
+	// Try to fetch the timer wake up seconds
+	if timer, found := moesifOption["Timer_Wake_Up_Seconds"].(int); found {
+		timerWakeupSeconds = timer
+	}
+
 	api := moesifapi.NewAPI(moesifOption["Application_Id"].(string), &apiEndpoint, eventQueueSize, batchSize, timerWakeupSeconds)
 	apiClient = api
 

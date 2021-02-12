@@ -20,7 +20,7 @@ go get github.com/moesif/moesifmiddleware-go
 Or, if you are already using Go Modules, specify a version number as well:
 
 ```bash
-go get github.com/moesif/moesifmiddleware-go@v1.0.8
+go get github.com/moesif/moesifmiddleware-go@v1.0.9
 ```
 
 ## How to use
@@ -105,6 +105,15 @@ to associate this event with custom metadata. For example, you may want to save 
 
 ### __`Log_Body`__
 (optional) _boolean_, Default true. Set to false to remove logging request and response body to Moesif.
+
+### __`Event_Queue_Size`__  
+(optional) _int_, An optional field name which specify the maximum number of events to hold in queue before sending to Moesif. In case of network issues when not able to connect/send event to Moesif, skips adding new events to the queue to prevent memory overflow. Default value is `10000`.
+
+### __`Batch_Size`__ 
+(optional) _int_, An optional field name which specify the maximum batch size when sending to Moesif. Default value is `200`.
+
+### __`Timer_Wake_Up_Seconds`__
+(optional) _int_, An optional field which specifies a time (every n seconds) how often background thread runs to send events to moesif. Default value is `2` seconds.
 
 ## Options for logging outgoing calls
 
