@@ -282,7 +282,19 @@ func MoesifMiddleware(next http.Handler, configurationOption map[string]interfac
 
 		// Request Time
 		requestTime := time.Now().UTC()
-
+		var body1, body2 io.ReadCloser
+		var err error
+		if logBody {
+			// buffer the entire request body into memory for logging
+			if body1, body2, err = teeBody(request.Body); err != nil {
+				log.Printf("Error while reading request body: %v.\n", err)
+			} else {
+				// Body is a ReadCloser meaning that it does not implement the Seek interface
+				// It must be buffered into memory to be read more than once
+				// This is a replacement reader reading the buffer for the original server handler
+				request.Body = body1
+			}
+		}
 		// Serve the HTTP Request
 		next.ServeHTTP(&response, request)
 
@@ -301,6 +313,10 @@ func MoesifMiddleware(next http.Handler, configurationOption map[string]interfac
 		} else {
 			if debug {
 				log.Printf("Sending the event to Moesif")
+			}
+			if logBody {
+				// this is a separate ReadCloser, reading the same buffer as above for logging
+				request.Body = body2
 			}
 			// Call the function to send event to Moesif
 			sendEvent(request, response, buf.String(), requestTime, responseTime)
@@ -374,4 +390,22 @@ func sendEvent(request *http.Request, response MoesifResponseRecorder, rspBuffer
 
 	// Send Event To Moesif
 	sendMoesifAsync(request, reqTime, requestHeader, apiVersion, reqBody, &reqEncoding, rspTime, response.status, responseHeader, respBody, &respEncoding, userId, companyId, &sessionToken, metadata, &direction)
+}
+
+// teeBody reads all of b to memory and then returns two equivalent
+// ReadClosers yielding the same bytes.
+// It returns an error if the initial slurp of all bytes fails.
+func teeBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
+	if b == nil || b == http.NoBody {
+		// No copying needed
+		return http.NoBody, http.NoBody, nil
+	}
+	var buf bytes.Buffer
+	if _, err = buf.ReadFrom(b); err != nil {
+		return nil, b, err
+	}
+	if err = b.Close(); err != nil {
+		return nil, b, err
+	}
+	return io.NopCloser(&buf), io.NopCloser(bytes.NewReader(buf.Bytes())), nil
 }
