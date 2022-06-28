@@ -25,8 +25,8 @@ var (
 	disableTransactionId bool
 	logBody              bool
 	logBodyOutgoing      bool
-	appConfig            AppConfig
-	governanceRules      GovernanceRules
+	appConfig            = NewAppConfig()
+	governanceRules      = NewGovernanceRules()
 )
 
 // Initialize the client

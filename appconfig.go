@@ -14,9 +14,11 @@ type AppConfig struct {
 	config  AppConfigResponse
 }
 
-func NewAppConfig() (c AppConfig) {
-	c.Updates = make(chan string)
-	return
+func NewAppConfig() AppConfig {
+	return AppConfig{
+		Updates: make(chan string),
+		config:  NewAppConfigResponse(),
+	}
 }
 
 func (c *AppConfig) Read() AppConfigResponse {
@@ -89,6 +91,12 @@ type AppConfigResponse struct {
 	eTag                     string
 }
 
+func NewAppConfigResponse() AppConfigResponse {
+	return AppConfigResponse{
+		SampleRate: 100,
+	}
+}
+
 // EntityRule is a user rule or company rule
 type EntityRuleValues struct {
 	Rule   string            `json:"rules"`
@@ -108,6 +116,7 @@ type RegexCondition struct {
 }
 
 func getAppConfig() (config AppConfigResponse, err error) {
+	config = NewAppConfigResponse()
 	r, err := apiClient.GetAppConfig()
 	if err != nil {
 		log.Printf("Application configuration request error: %v", err)
