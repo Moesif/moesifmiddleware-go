@@ -17,8 +17,6 @@ type GovernanceRules struct {
 }
 
 type GovernanceRulesConfig struct {
-	Users       map[string][]EntityRuleValues
-	Companies   map[string][]EntityRuleValues
 	EntityRules map[string]moesifapi.GovernanceRule
 	Regex       []moesifapi.GovernanceRule
 }
@@ -89,8 +87,6 @@ func (g *GovernanceRules) UpdateLoop() {
 }
 
 func NewGovernanceRulesConfig() (g GovernanceRulesConfig) {
-	g.Users = make(map[string][]EntityRuleValues)
-	g.Companies = make(map[string][]EntityRuleValues)
 	g.EntityRules = make(map[string]moesifapi.GovernanceRule)
 	return
 }
@@ -107,6 +103,7 @@ func (r RuleTemplate) TemplateOverride() (t TemplatedOverrideValues) {
 	for k, v := range r.Rule.ResponseOverrides.Headers {
 		t.Headers[k] = moesifapi.Template(v, r.Values)
 	}
+	t.Body = []byte(moesifapi.Template(string(r.Rule.ResponseOverrides.Body), r.Values))
 	return
 }
 
@@ -117,10 +114,8 @@ type TemplatedOverrideValues struct {
 	Body    []byte
 }
 
-func (g *GovernanceRules) Get(request *http.Request, companyId string, userId string) (rules []RuleTemplate) {
-	g.Mu.RLock()
-	config := g.config
-	g.Mu.RUnlock()
+func (g *GovernanceRules) Get(request *http.Request, entityValues []EntityRuleValues) (rules []RuleTemplate) {
+	config := g.Read()
 	// in a list of rules with overrides, the last override value is what will be used in the response
 	// create a slice of rules to check in reverse priority order
 	// regex rule, company rule, user rule order, i.e. user rule overrides take priority over company, etc.
@@ -129,14 +124,8 @@ func (g *GovernanceRules) Get(request *http.Request, companyId string, userId st
 	for i, r := range config.Regex {
 		regexToCheck[i] = RuleTemplate{Rule: r}
 	}
-	// look up and copy company rules to check
-	for _, ev := range config.Companies[companyId] {
-		if rule, ok := config.EntityRules[ev.Rule]; ok {
-			regexToCheck = append(regexToCheck, RuleTemplate{rule, ev.Values})
-		}
-	}
-	// Lookup and copy user rules to check
-	for _, ev := range config.Users[userId] {
+	//copy all user and company entity rules
+	for _, ev := range entityValues {
 		if rule, ok := config.EntityRules[ev.Rule]; ok {
 			regexToCheck = append(regexToCheck, RuleTemplate{rule, ev.Values})
 		}

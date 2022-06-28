@@ -59,12 +59,19 @@ func (c *AppConfig) UpdateLoop() {
 		if err != nil {
 			continue
 		}
-		c.Mu.Lock()
 		c.Write(config)
-		c.Mu.Unlock()
 		c.eTags[1] = c.eTags[0]
 		c.eTags[0] = config.eTag
 	}
+}
+
+func (c *AppConfig) GetEntityValues(userId, companyId string) (values []EntityRuleValues) {
+	config := c.Read()
+	// look up and copy company rules to check
+	values = append(values, config.CompanyRules[companyId]...)
+	// Lookup and copy user rules to check
+	values = append(values, config.UserRules[userId]...)
+	return
 }
 
 type AppConfigResponse struct {
