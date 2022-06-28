@@ -1,13 +1,13 @@
 package moesifmiddleware
 
 import (
-	"github.com/moesif/moesifapi-go/models"
 	"log"
-	"math"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/moesif/moesifapi-go/models"
 )
 
 // Send Event to Moesif
@@ -46,7 +46,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 	randomPercentage := rand.Intn(100)
 
 	// Parse sampling percentage based on user/company
-	samplingPercentage = getSamplingPercentage(userId, companyId)
+	samplingPercentage := getSamplingPercentage(userId, companyId)
 
 	if samplingPercentage > randomPercentage {
 
@@ -55,7 +55,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 		if samplingPercentage == 0 {
 			eventWeight = 1
 		} else {
-			eventWeight = int(math.Floor(float64(100 / samplingPercentage)))
+			eventWeight = 100 / samplingPercentage
 		}
 
 		// Prepare the event model
@@ -80,20 +80,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 			}
 		}
 
-		if apiClient.GetETag() != "" &&
-			eTag != "" &&
-			eTag != apiClient.GetETag() &&
-			time.Now().UTC().After(lastUpdatedTime.Add(time.Minute*5)) {
-
-			// Call Endpoint to fetch config
-			response, err := apiClient.GetAppConfig()
-
-			if err == nil {
-				samplingPercentage, eTag, lastUpdatedTime = parseConfiguration(response)
-			} else {
-				log.Println("Error fetching application configuration with err -  " + err.Error())
-			}
-		}
+		appConfig.Notify(apiClient.GetETag())
 	} else {
 		log.Println("Skipped Event due to sampling percentage: " + strconv.Itoa(samplingPercentage) + " and random percentage: " + strconv.Itoa(randomPercentage))
 	}

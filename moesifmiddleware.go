@@ -7,30 +7,26 @@ import (
 	"bytes"
 	"crypto/rand"
 	"fmt"
-	moesifapi "github.com/moesif/moesifapi-go"
-	"github.com/moesif/moesifapi-go/models"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
+
+	moesifapi "github.com/moesif/moesifapi-go"
+	"github.com/moesif/moesifapi-go/models"
 )
 
 // Global variable
 var (
-	apiClient              moesifapi.API
-	debug                  bool
-	moesifOption           map[string]interface{}
-	disableCaptureOutgoing bool
-	disableTransactionId   bool
-	logBody                bool
-	logBodyOutgoing        bool
-	samplingPercentage     int
-	eTag                   string
-	lastUpdatedTime        time.Time
-	appConfig              map[string]interface{}
-	userSampleRateMap      map[string]interface{}
-	companySampleRateMap   map[string]interface{}
+	apiClient            moesifapi.API
+	debug                bool
+	moesifOption         map[string]interface{}
+	disableTransactionId bool
+	logBody              bool
+	logBodyOutgoing      bool
+	appConfig            AppConfig
+	governanceRules      GovernanceRules
 )
 
 // Initialize the client
@@ -85,17 +81,12 @@ func moesifClient(moesifOption map[string]interface{}) {
 		logBody = isEnabled
 	}
 
-	// Fetch application config
-	response, err := apiClient.GetAppConfig()
-
-	// Parse Configuration
-	if err == nil {
-		samplingPercentage, eTag, lastUpdatedTime = parseConfiguration(response)
-	} else {
-		if debug {
-			log.Printf("Error fetching application configuration on initilization with err: %s.\n", err.Error())
-		}
-	}
+	newAppConfig := NewAppConfig()
+	// run goroutine to check end point for updates
+	newAppConfig.Go()
+	governanceRules := NewGovernanceRules()
+	// run goroutine to check end point for updates
+	governanceRules.Go()
 }
 
 // Moesif Response Recorder
@@ -295,8 +286,16 @@ func MoesifMiddleware(next http.Handler, configurationOption map[string]interfac
 				request.Body = body1
 			}
 		}
-		// Serve the HTTP Request
-		next.ServeHTTP(&response, request)
+
+		companyId := getConfigStringValuesForIncomingEvent("Identify_Company", request, response)
+		userId := getConfigStringValuesForIncomingEvent("Identify_User", request, response)
+		rules := governanceRules.Get(request, companyId, userId)
+		ro := NewResponseOverride(&response, rules)
+		if !ro.Override.Block {
+			// Serve the HTTP Request
+			next.ServeHTTP(&ro, request)
+		}
+		ro.finish()
 
 		// Response Time
 		responseTime := time.Now().UTC()
