@@ -58,6 +58,8 @@ func moesifClient(moesifOption map[string]interface{}) {
 	}
 
 	api := moesifapi.NewAPI(moesifOption["Application_Id"].(string), &apiEndpoint, eventQueueSize, batchSize, timerWakeupSeconds)
+	api.SetEventsHeaderCallback("X-Moesif-Config-ETag", appConfig.Notify)
+	api.SetEventsHeaderCallback("X-Moesif-Rules-Tag", governanceRules.Notify)
 	apiClient = api
 
 	//  Disable debug by default
