@@ -1,6 +1,9 @@
 package moesifmiddleware
 
 import (
+	"encoding/json"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
@@ -19,11 +22,12 @@ type GovernanceRules struct {
 type GovernanceRulesConfig struct {
 	EntityRules map[string]moesifapi.GovernanceRule
 	Regex       []moesifapi.GovernanceRule
+	eTag        string
 }
 
 func NewGovernanceRules() GovernanceRules {
 	return GovernanceRules{
-		Updates: make(chan string),
+		Updates: make(chan string, 1),
 		config:  NewGovernanceRulesConfig(),
 	}
 }
@@ -38,6 +42,8 @@ func (g *GovernanceRules) Write(config GovernanceRulesConfig) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 	g.config = config
+	g.eTags[1] = g.eTags[0]
+	g.eTags[0] = config.eTag
 }
 
 func (g *GovernanceRules) Go() {
@@ -46,7 +52,10 @@ func (g *GovernanceRules) Go() {
 }
 
 func (g *GovernanceRules) Notify(eTag string) {
-	if eTag == "" {
+	g.Mu.RLock()
+	e := g.eTags
+	g.Mu.RUnlock()
+	if eTag == "" || eTag == e[0] || eTag == e[1] {
 		return
 	}
 	select {
@@ -61,14 +70,13 @@ func (g *GovernanceRules) UpdateLoop() {
 		if !more {
 			return
 		}
-		if eTag == g.eTags[0] || eTag == g.eTags[1] {
-			continue
-		}
 		response, err := apiClient.GetGovernanceRules()
 		if err != nil {
+			log.Printf("Failed to get governance rules: %v", err)
 			continue
 		}
 		config := NewGovernanceRulesConfig()
+		config.eTag = response.ETag
 		for _, r := range response.Rules {
 			switch r.Type {
 			case "user", "company":
@@ -78,11 +86,8 @@ func (g *GovernanceRules) UpdateLoop() {
 			}
 
 		}
-		g.Mu.Lock()
+		log.Printf("GovernanceRules.Notify ETag=%s got /rules response ETag=%s", eTag, config.eTag)
 		g.Write(config)
-		g.Mu.Unlock()
-		g.eTags[1] = g.eTags[0]
-		g.eTags[0] = response.ETag
 	}
 }
 
@@ -197,6 +202,7 @@ func (r *ResponseOverride) finish() {
 }
 
 func RequestPathLookup(req *http.Request, path string) string {
+	var b io.ReadCloser
 	switch path {
 	case "request.ip_address":
 		return req.RemoteAddr
@@ -204,9 +210,32 @@ func RequestPathLookup(req *http.Request, path string) string {
 		return req.URL.Path
 	case "request.verb":
 		return req.Method
-	default:
-		return ""
 	}
+
+	if t := req.Header.Get("Content-Type"); path[:16] == "request.graphql." && (t == "application/json" || t == "application/graphql") {
+		var s, op string
+		var err error
+		req.Body, b, err = teeBody(req.Body)
+		if err != nil {
+			log.Printf("Unable to read incoming request body: %v", err)
+		}
+		body, _ := ioutil.ReadAll(b)
+		var q struct{ Query, OperationName string }
+		json.Unmarshal(body, &q)
+		switch path {
+		case "request.graphql.operation_name":
+			op = "operationName"
+			s = q.OperationName
+		case "request.graphql.query":
+			op = "query"
+			s = q.Query
+		}
+		if s == "" {
+			s = req.URL.Query().Get(op)
+		}
+		return s
+	}
+	return ""
 }
 
 func CheckRegex(rule moesifapi.GovernanceRule, req *http.Request) bool {
