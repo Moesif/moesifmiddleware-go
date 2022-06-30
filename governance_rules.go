@@ -2,11 +2,11 @@ package moesifmiddleware
 
 import (
 	"encoding/json"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/moesif/moesifapi-go"
@@ -201,8 +201,34 @@ func (r *ResponseOverride) finish() {
 	}
 }
 
+// bufferRequestBody reads the request body into a buffer and update the request
+// object with a reader containing a copy of the contents so that the request
+// may be used as normal
+func bufferRequestBody(req *http.Request) (body []byte) {
+	newBody, b, err := teeBody(req.Body)
+	if err != nil {
+		log.Printf("Unable to read incoming request body: %v", err)
+		return
+	}
+	req.Body = newBody
+	body, _ = ioutil.ReadAll(b)
+	return
+}
+
+// getJsonKeyString attempts to read a JSON object from input j and
+// if object.key exists and has a string value, it is returned
+func getJsonKeyString(j []byte, key string) (s string) {
+	d := make(map[string]json.RawMessage)
+	if json.Unmarshal(j, &d) == nil {
+		if m, ok := d[key]; ok {
+			json.Unmarshal(m, &s)
+		}
+	}
+	return
+}
+
+// RequestPathLookup returns the string in a given regexp matching path from req
 func RequestPathLookup(req *http.Request, path string) string {
-	var b io.ReadCloser
 	switch path {
 	case "request.ip_address":
 		return req.RemoteAddr
@@ -211,29 +237,17 @@ func RequestPathLookup(req *http.Request, path string) string {
 	case "request.verb":
 		return req.Method
 	}
-
-	if t := req.Header.Get("Content-Type"); path[:16] == "request.graphql." && (t == "application/json" || t == "application/graphql") {
-		var s, op string
-		var err error
-		req.Body, b, err = teeBody(req.Body)
-		if err != nil {
-			log.Printf("Unable to read incoming request body: %v", err)
+	const requestBody = "request.body."
+	t := req.Header.Get("Content-Type")
+	if strings.HasPrefix(path, requestBody) && (t == "application/graphql" || t == "application/json") {
+		body := bufferRequestBody(req)
+		key := strings.TrimPrefix(path, requestBody)
+		if t == "application/graphql" && key == "query" {
+			return string(body)
 		}
-		body, _ := ioutil.ReadAll(b)
-		var q struct{ Query, OperationName string }
-		json.Unmarshal(body, &q)
-		switch path {
-		case "request.graphql.operation_name":
-			op = "operationName"
-			s = q.OperationName
-		case "request.graphql.query":
-			op = "query"
-			s = q.Query
+		if t == "application/json" {
+			return getJsonKeyString(body, key)
 		}
-		if s == "" {
-			s = req.URL.Query().Get(op)
-		}
-		return s
 	}
 	return ""
 }
