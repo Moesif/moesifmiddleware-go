@@ -79,8 +79,6 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 				log.Println("Event successfully added to the queue")
 			}
 		}
-
-		appConfig.Notify(apiClient.GetETag())
 	} else {
 		log.Println("Skipped Event due to sampling percentage: " + strconv.Itoa(samplingPercentage) + " and random percentage: " + strconv.Itoa(randomPercentage))
 	}

@@ -25,8 +25,8 @@ var (
 	disableTransactionId bool
 	logBody              bool
 	logBodyOutgoing      bool
-	appConfig            AppConfig
-	governanceRules      GovernanceRules
+	appConfig            = NewAppConfig()
+	governanceRules      = NewGovernanceRules()
 )
 
 // Initialize the client
@@ -58,6 +58,8 @@ func moesifClient(moesifOption map[string]interface{}) {
 	}
 
 	api := moesifapi.NewAPI(moesifOption["Application_Id"].(string), &apiEndpoint, eventQueueSize, batchSize, timerWakeupSeconds)
+	api.SetEventsHeaderCallback("X-Moesif-Config-ETag", appConfig.Notify)
+	api.SetEventsHeaderCallback("X-Moesif-Rules-Tag", governanceRules.Notify)
 	apiClient = api
 
 	//  Disable debug by default
@@ -81,10 +83,8 @@ func moesifClient(moesifOption map[string]interface{}) {
 		logBody = isEnabled
 	}
 
-	newAppConfig := NewAppConfig()
 	// run goroutine to check end point for updates
-	newAppConfig.Go()
-	governanceRules := NewGovernanceRules()
+	appConfig.Go()
 	// run goroutine to check end point for updates
 	governanceRules.Go()
 }
@@ -289,7 +289,12 @@ func MoesifMiddleware(next http.Handler, configurationOption map[string]interfac
 
 		companyId := getConfigStringValuesForIncomingEvent("Identify_Company", request, response)
 		userId := getConfigStringValuesForIncomingEvent("Identify_User", request, response)
-		rules := governanceRules.Get(request, companyId, userId)
+		// get user / company cohort rules' individual user and company entities info
+		// this is used to associate these entities with a speicifc rule and provide individual
+		// entity fields for header and body templating in the rule
+		entityValues := appConfig.GetEntityValues(userId, companyId)
+		// get rule records for cohort members above as well as regexp rules and check all rule matches
+		rules := governanceRules.Get(request, entityValues)
 		ro := NewResponseOverride(&response, rules)
 		if !ro.Override.Block {
 			// Serve the HTTP Request

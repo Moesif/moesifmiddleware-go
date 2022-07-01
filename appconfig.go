@@ -14,9 +14,11 @@ type AppConfig struct {
 	config  AppConfigResponse
 }
 
-func NewAppConfig() (c AppConfig) {
-	c.Updates = make(chan string)
-	return
+func NewAppConfig() AppConfig {
+	return AppConfig{
+		Updates: make(chan string, 1),
+		config:  NewAppConfigResponse(),
+	}
 }
 
 func (c *AppConfig) Read() AppConfigResponse {
@@ -29,6 +31,8 @@ func (c *AppConfig) Write(config AppConfigResponse) {
 	c.Mu.Lock()
 	defer c.Mu.Unlock()
 	c.config = config
+	c.eTags[1] = c.eTags[0]
+	c.eTags[0] = config.eTag
 }
 
 func (c *AppConfig) Go() {
@@ -37,7 +41,10 @@ func (c *AppConfig) Go() {
 }
 
 func (c *AppConfig) Notify(eTag string) {
-	if eTag == "" {
+	c.Mu.RLock()
+	e := c.eTags
+	c.Mu.RUnlock()
+	if eTag == "" || eTag == e[0] || eTag == e[1] {
 		return
 	}
 	select {
@@ -52,19 +59,24 @@ func (c *AppConfig) UpdateLoop() {
 		if !more {
 			return
 		}
-		if eTag == c.eTags[0] || eTag == c.eTags[1] {
-			continue
-		}
 		config, err := getAppConfig()
 		if err != nil {
+			log.Printf("Failed to get config: %v", err)
 			continue
 		}
-		c.Mu.Lock()
+		log.Printf("AppConfig.Notify ETag=%s got /config response ETag=%s", eTag, config.eTag)
 		c.Write(config)
-		c.Mu.Unlock()
-		c.eTags[1] = c.eTags[0]
-		c.eTags[0] = config.eTag
 	}
+}
+
+func (c *AppConfig) GetEntityValues(userId, companyId string) (values []EntityRuleValues) {
+	log.Printf("userId=%s companyId=%s", userId, companyId)
+	config := c.Read()
+	// look up and copy company rules to check
+	values = append(values, config.CompanyRules[companyId]...)
+	// Lookup and copy user rules to check
+	values = append(values, config.UserRules[userId]...)
+	return
 }
 
 type AppConfigResponse struct {
@@ -80,6 +92,12 @@ type AppConfigResponse struct {
 	RegexConfig              []RegexRule                   `json:"regex_config"`
 	BillingConfigJsons       map[string]string             `json:"billing_config_jsons"`
 	eTag                     string
+}
+
+func NewAppConfigResponse() AppConfigResponse {
+	return AppConfigResponse{
+		SampleRate: 100,
+	}
 }
 
 // EntityRule is a user rule or company rule
@@ -101,6 +119,7 @@ type RegexCondition struct {
 }
 
 func getAppConfig() (config AppConfigResponse, err error) {
+	config = NewAppConfigResponse()
 	r, err := apiClient.GetAppConfig()
 	if err != nil {
 		log.Printf("Application configuration request error: %v", err)
@@ -116,14 +135,8 @@ func getAppConfig() (config AppConfigResponse, err error) {
 		log.Printf("Application configuration response body malformed: %v", err)
 		return
 	}
-	if values, ok := r.Header["X-Moesif-Config-Etag"]; ok {
-		config.eTag = values[0]
-	}
+	config.eTag = r.Header.Get("X-Moesif-Config-Etag")
 	return
-}
-
-func updateAppConfig() {
-
 }
 
 func getSamplingPercentage(userId string, companyId string) int {

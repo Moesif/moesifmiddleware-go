@@ -1,9 +1,12 @@
 package moesifmiddleware
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/moesif/moesifapi-go"
@@ -17,15 +20,14 @@ type GovernanceRules struct {
 }
 
 type GovernanceRulesConfig struct {
-	Users       map[string][]EntityRuleValues
-	Companies   map[string][]EntityRuleValues
 	EntityRules map[string]moesifapi.GovernanceRule
 	Regex       []moesifapi.GovernanceRule
+	eTag        string
 }
 
 func NewGovernanceRules() GovernanceRules {
 	return GovernanceRules{
-		Updates: make(chan string),
+		Updates: make(chan string, 1),
 		config:  NewGovernanceRulesConfig(),
 	}
 }
@@ -40,6 +42,8 @@ func (g *GovernanceRules) Write(config GovernanceRulesConfig) {
 	g.Mu.Lock()
 	defer g.Mu.Unlock()
 	g.config = config
+	g.eTags[1] = g.eTags[0]
+	g.eTags[0] = config.eTag
 }
 
 func (g *GovernanceRules) Go() {
@@ -48,7 +52,10 @@ func (g *GovernanceRules) Go() {
 }
 
 func (g *GovernanceRules) Notify(eTag string) {
-	if eTag == "" {
+	g.Mu.RLock()
+	e := g.eTags
+	g.Mu.RUnlock()
+	if eTag == "" || eTag == e[0] || eTag == e[1] {
 		return
 	}
 	select {
@@ -63,34 +70,28 @@ func (g *GovernanceRules) UpdateLoop() {
 		if !more {
 			return
 		}
-		if eTag == g.eTags[0] || eTag == g.eTags[1] {
-			continue
-		}
 		response, err := apiClient.GetGovernanceRules()
 		if err != nil {
+			log.Printf("Failed to get governance rules: %v", err)
 			continue
 		}
 		config := NewGovernanceRulesConfig()
+		config.eTag = response.ETag
 		for _, r := range response.Rules {
 			switch r.Type {
 			case "user", "company":
 				config.EntityRules[r.ID] = r
-			case "regexp":
+			case "regex":
 				config.Regex = append(config.Regex, r)
 			}
 
 		}
-		g.Mu.Lock()
+		log.Printf("GovernanceRules.Notify ETag=%s got /rules response ETag=%s", eTag, config.eTag)
 		g.Write(config)
-		g.Mu.Unlock()
-		g.eTags[1] = g.eTags[0]
-		g.eTags[0] = response.ETag
 	}
 }
 
 func NewGovernanceRulesConfig() (g GovernanceRulesConfig) {
-	g.Users = make(map[string][]EntityRuleValues)
-	g.Companies = make(map[string][]EntityRuleValues)
 	g.EntityRules = make(map[string]moesifapi.GovernanceRule)
 	return
 }
@@ -107,6 +108,7 @@ func (r RuleTemplate) TemplateOverride() (t TemplatedOverrideValues) {
 	for k, v := range r.Rule.ResponseOverrides.Headers {
 		t.Headers[k] = moesifapi.Template(v, r.Values)
 	}
+	t.Body = []byte(moesifapi.Template(string(r.Rule.ResponseOverrides.Body), r.Values))
 	return
 }
 
@@ -117,10 +119,8 @@ type TemplatedOverrideValues struct {
 	Body    []byte
 }
 
-func (g *GovernanceRules) Get(request *http.Request, companyId string, userId string) (rules []RuleTemplate) {
-	g.Mu.RLock()
-	config := g.config
-	g.Mu.RUnlock()
+func (g *GovernanceRules) Get(request *http.Request, entityValues []EntityRuleValues) (rules []RuleTemplate) {
+	config := g.Read()
 	// in a list of rules with overrides, the last override value is what will be used in the response
 	// create a slice of rules to check in reverse priority order
 	// regex rule, company rule, user rule order, i.e. user rule overrides take priority over company, etc.
@@ -129,14 +129,8 @@ func (g *GovernanceRules) Get(request *http.Request, companyId string, userId st
 	for i, r := range config.Regex {
 		regexToCheck[i] = RuleTemplate{Rule: r}
 	}
-	// look up and copy company rules to check
-	for _, ev := range config.Companies[companyId] {
-		if rule, ok := config.EntityRules[ev.Rule]; ok {
-			regexToCheck = append(regexToCheck, RuleTemplate{rule, ev.Values})
-		}
-	}
-	// Lookup and copy user rules to check
-	for _, ev := range config.Users[userId] {
+	//copy all user and company entity rules
+	for _, ev := range entityValues {
 		if rule, ok := config.EntityRules[ev.Rule]; ok {
 			regexToCheck = append(regexToCheck, RuleTemplate{rule, ev.Values})
 		}
@@ -207,6 +201,33 @@ func (r *ResponseOverride) finish() {
 	}
 }
 
+// bufferRequestBody reads the request body into a buffer and update the request
+// object with a reader containing a copy of the contents so that the request
+// may be used as normal
+func bufferRequestBody(req *http.Request) (body []byte) {
+	newBody, b, err := teeBody(req.Body)
+	if err != nil {
+		log.Printf("Unable to read incoming request body: %v", err)
+		return
+	}
+	req.Body = newBody
+	body, _ = ioutil.ReadAll(b)
+	return
+}
+
+// getJsonKeyString attempts to read a JSON object from input j and
+// if object.key exists and has a string value, it is returned
+func getJsonKeyString(j []byte, key string) (s string) {
+	d := make(map[string]json.RawMessage)
+	if json.Unmarshal(j, &d) == nil {
+		if m, ok := d[key]; ok {
+			json.Unmarshal(m, &s)
+		}
+	}
+	return
+}
+
+// RequestPathLookup returns the string in a given regexp matching path from req
 func RequestPathLookup(req *http.Request, path string) string {
 	switch path {
 	case "request.ip_address":
@@ -215,9 +236,20 @@ func RequestPathLookup(req *http.Request, path string) string {
 		return req.URL.Path
 	case "request.verb":
 		return req.Method
-	default:
-		return ""
 	}
+	const requestBody = "request.body."
+	t := req.Header.Get("Content-Type")
+	if strings.HasPrefix(path, requestBody) && (t == "application/graphql" || t == "application/json") {
+		body := bufferRequestBody(req)
+		key := strings.TrimPrefix(path, requestBody)
+		if t == "application/graphql" && key == "query" {
+			return string(body)
+		}
+		if t == "application/json" {
+			return getJsonKeyString(body, key)
+		}
+	}
+	return ""
 }
 
 func CheckRegex(rule moesifapi.GovernanceRule, req *http.Request) bool {
