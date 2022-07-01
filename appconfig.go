@@ -70,7 +70,6 @@ func (c *AppConfig) UpdateLoop() {
 }
 
 func (c *AppConfig) GetEntityValues(userId, companyId string) (values []EntityRuleValues) {
-	log.Printf("userId=%s companyId=%s", userId, companyId)
 	config := c.Read()
 	// look up and copy company rules to check
 	values = append(values, config.CompanyRules[companyId]...)
