@@ -83,10 +83,8 @@ func moesifClient(moesifOption map[string]interface{}) {
 		logBody = isEnabled
 	}
 
-	newAppConfig := NewAppConfig()
 	// run goroutine to check end point for updates
-	newAppConfig.Go()
-	governanceRules := NewGovernanceRules()
+	appConfig.Go()
 	// run goroutine to check end point for updates
 	governanceRules.Go()
 }

@@ -81,7 +81,7 @@ func (g *GovernanceRules) UpdateLoop() {
 			switch r.Type {
 			case "user", "company":
 				config.EntityRules[r.ID] = r
-			case "regexp":
+			case "regex":
 				config.Regex = append(config.Regex, r)
 			}
 
