@@ -80,6 +80,8 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 			}
 		}
 	} else {
-		log.Println("Skipped Event due to sampling percentage: " + strconv.Itoa(samplingPercentage) + " and random percentage: " + strconv.Itoa(randomPercentage))
+		if debug{
+			log.Println("Skipped Event due to sampling percentage: " + strconv.Itoa(samplingPercentage) + " and random percentage: " + strconv.Itoa(randomPercentage))
+		}
 	}
 }
