@@ -151,22 +151,18 @@ func (g *GovernanceRules) Get(request *http.Request, userValues, companyValues [
 	// in a list of rules with overrides, the last override value is what will be used in the response
 	// create a slice of rules to check in reverse priority order
 	// regex rule, company rule, user rule order, i.e. user rule overrides take priority over company, etc.
-	regexToCheck := make([]RuleTemplate, len(config.Regex))
+	regexToCheck := []RuleTemplate{}
 
-	if userId == "" {
-		// if a user_id is matching a cohort in any rule, it will have an EntityRuleValues entry in userValues
-		// collecting the rule ids that match the company_id in isInCohort allows us to efficiently
-		// and simply check if the current entity is in any cohort for a given rule to apply non_matching rules
-		isInCohort, matching := GetMatchingRuleTemplates(config, userValues)
-		regexToCheck = append(regexToCheck, matching...)
-		regexToCheck = append(regexToCheck, GetNotMatchingRuleTemplates(config.UserRules, userId, isInCohort)...)
-	}
+	// if a user_id is matching a cohort in any rule, it will have an EntityRuleValues entry in userValues
+	// collecting the rule ids that match the company_id in isInCohort allows us to efficiently
+	// and simply check if the current entity is in any cohort for a given rule to apply non_matching rules
+	isInCohort, matching := GetMatchingRuleTemplates(config, userValues)
+	regexToCheck = append(regexToCheck, matching...)
+	regexToCheck = append(regexToCheck, GetNotMatchingRuleTemplates(config.UserRules, userId, isInCohort)...)
 
-	if companyId == "" {
-		isInCohort, matching := GetMatchingRuleTemplates(config, companyValues)
-		regexToCheck = append(regexToCheck, matching...)
-		regexToCheck = append(regexToCheck, GetNotMatchingRuleTemplates(config.CompanyRules, companyId, isInCohort)...)
-	}
+	isInCohort, matching = GetMatchingRuleTemplates(config, companyValues)
+	regexToCheck = append(regexToCheck, matching...)
+	regexToCheck = append(regexToCheck, GetNotMatchingRuleTemplates(config.CompanyRules, companyId, isInCohort)...)
 
 	for _, r := range config.Regex {
 		regexToCheck = append(regexToCheck, RuleTemplate{Rule: r})
