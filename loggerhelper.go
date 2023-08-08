@@ -84,7 +84,11 @@ func parseBody(readReqBody []byte, fieldName string) (interface{}, string) {
 		var maskFields []string
 		if _, found := moesifOption[fieldName]; found {
 			maskFields = moesifOption[fieldName].(func() []string)()
-			body = maskData(body.(map[string]interface{}), maskFields)
+			if mappedBody, ok := body.(map[string]interface{}); ok {
+				body = maskData(mappedBody, maskFields)
+			} else {
+				log.Printf("Expected body to be a map but got: %T", body)
+			}
 		}
 	}
 	return body, bodyEncoding
