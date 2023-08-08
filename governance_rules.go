@@ -20,9 +20,11 @@ type GovernanceRules struct {
 }
 
 type GovernanceRulesConfig struct {
-	EntityRules map[string]moesifapi.GovernanceRule
-	Regex       []moesifapi.GovernanceRule
-	eTag        string
+	EntityRules  map[string]moesifapi.GovernanceRule
+	UserRules    []moesifapi.GovernanceRule
+	CompanyRules []moesifapi.GovernanceRule
+	Regex        []moesifapi.GovernanceRule
+	eTag         string
 }
 
 func NewGovernanceRules() GovernanceRules {
@@ -79,12 +81,15 @@ func (g *GovernanceRules) UpdateLoop() {
 		config.eTag = response.ETag
 		for _, r := range response.Rules {
 			switch r.Type {
-			case "user", "company":
+			case "user":
+				config.UserRules = append(config.UserRules, r)
+				config.EntityRules[r.ID] = r
+			case "company":
+				config.CompanyRules = append(config.CompanyRules, r)
 				config.EntityRules[r.ID] = r
 			case "regex":
 				config.Regex = append(config.Regex, r)
 			}
-
 		}
 		log.Printf("GovernanceRules.Notify ETag=%s got /rules response ETag=%s", eTag, config.eTag)
 		g.Write(config)
@@ -119,24 +124,59 @@ type TemplatedOverrideValues struct {
 	Body    []byte
 }
 
-func (g *GovernanceRules) Get(request *http.Request, entityValues []EntityRuleValues) (rules []RuleTemplate) {
+func GetMatchingRuleTemplates(config GovernanceRulesConfig, values []EntityRuleValues) (inCohorts map[string]bool, templates []RuleTemplate) {
+	inCohorts = make(map[string]bool)
+	for _, ev := range values {
+		// check all the rules for which this entity is in a cohort
+		inCohorts[ev.Rule] = true
+		// if the rule is a matching rule, add it to the list of templates
+		if rule, ok := config.EntityRules[ev.Rule]; ok && rule.ApplyTo == "matching" {
+			templates = append(templates, RuleTemplate{rule, ev.Values})
+		}
+	}
+	return
+}
+
+func GetNotMatchingRuleTemplates(rules []moesifapi.GovernanceRule, entityId string, isInCohort map[string]bool) (templates []RuleTemplate) {
+	for _, rule := range rules {
+		if rule.ApplyTo == "not_matching" && !isInCohort[rule.ID] || rule.ApplyUnidentified && entityId == "" {
+			templates = append(templates, RuleTemplate{Rule: rule})
+		}
+	}
+	return
+}
+
+func (g *GovernanceRules) Get(request *http.Request, userValues, companyValues []EntityRuleValues, userId, companyId string) (rules []RuleTemplate) {
 	config := g.Read()
 	// in a list of rules with overrides, the last override value is what will be used in the response
 	// create a slice of rules to check in reverse priority order
 	// regex rule, company rule, user rule order, i.e. user rule overrides take priority over company, etc.
 	regexToCheck := make([]RuleTemplate, len(config.Regex))
-	// copy all regex rules first
-	for i, r := range config.Regex {
-		regexToCheck[i] = RuleTemplate{Rule: r}
+
+	if userId == "" {
+		// if a user_id is matching a cohort in any rule, it will have an EntityRuleValues entry in userValues
+		// collecting the rule ids that match the company_id in isInCohort allows us to efficiently
+		// and simply check if the current entity is in any cohort for a given rule to apply non_matching rules
+		isInCohort, matching := GetMatchingRuleTemplates(config, userValues)
+		regexToCheck = append(regexToCheck, matching...)
+		regexToCheck = append(regexToCheck, GetNotMatchingRuleTemplates(config.UserRules, userId, isInCohort)...)
 	}
-	//copy all user and company entity rules
-	for _, ev := range entityValues {
-		if rule, ok := config.EntityRules[ev.Rule]; ok {
-			regexToCheck = append(regexToCheck, RuleTemplate{rule, ev.Values})
-		}
+
+	if companyId == "" {
+		isInCohort, matching := GetMatchingRuleTemplates(config, companyValues)
+		regexToCheck = append(regexToCheck, matching...)
+		regexToCheck = append(regexToCheck, GetNotMatchingRuleTemplates(config.CompanyRules, companyId, isInCohort)...)
 	}
+
+	for _, r := range config.Regex {
+		regexToCheck = append(regexToCheck, RuleTemplate{Rule: r})
+	}
+
 	// if a rule from above has regex conditions, the rule is used if matching; otherwise, it's used
-	for _, r := range regexToCheck {
+	// the rules have priority in order from highest to lowest.  We apply the list in reverse order so that
+	// the highest priority rules are applied last and thus their value is used in the final response
+	for i := len(regexToCheck) - 1; i >= 0; i-- {
+		r := regexToCheck[i]
 		if CheckRegex(r.Rule, request) {
 			rules = append(rules, r)
 		}
@@ -253,6 +293,7 @@ func RequestPathLookup(req *http.Request, path string) string {
 }
 
 func CheckRegex(rule moesifapi.GovernanceRule, req *http.Request) bool {
+	// if no regex conditions are specified, the rule matches
 	if len(rule.RegexConfigOr) == 0 {
 		return true
 	}

@@ -292,9 +292,9 @@ func MoesifMiddleware(next http.Handler, configurationOption map[string]interfac
 		// get user / company cohort rules' individual user and company entities info
 		// this is used to associate these entities with a speicifc rule and provide individual
 		// entity fields for header and body templating in the rule
-		entityValues := appConfig.GetEntityValues(userId, companyId)
+		userValues, companyValues := appConfig.GetEntityValues(userId, companyId)
 		// get rule records for cohort members above as well as regexp rules and check all rule matches
-		rules := governanceRules.Get(request, entityValues)
+		rules := governanceRules.Get(request, userValues, companyValues, userId, companyId)
 		ro := NewResponseOverride(&response, rules)
 		if !ro.Override.Block {
 			// Serve the HTTP Request

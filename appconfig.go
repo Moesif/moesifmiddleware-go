@@ -69,13 +69,9 @@ func (c *AppConfig) UpdateLoop() {
 	}
 }
 
-func (c *AppConfig) GetEntityValues(userId, companyId string) (values []EntityRuleValues) {
+func (c *AppConfig) GetEntityValues(userId, companyId string) (userValues, companyValues []EntityRuleValues) {
 	config := c.Read()
-	// look up and copy company rules to check
-	values = append(values, config.CompanyRules[companyId]...)
-	// Lookup and copy user rules to check
-	values = append(values, config.UserRules[userId]...)
-	return
+	return config.UserRules[userId], config.CompanyRules[companyId]
 }
 
 type AppConfigResponse struct {
