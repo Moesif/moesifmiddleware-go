@@ -149,8 +149,8 @@ func GetNotMatchingRuleTemplates(rules []moesifapi.GovernanceRule, entityId stri
 func (g *GovernanceRules) Get(request *http.Request, userValues, companyValues []EntityRuleValues, userId, companyId string) (rules []RuleTemplate) {
 	config := g.Read()
 	// in a list of rules with overrides, the last override value is what will be used in the response
-	// create a slice of rules to check in reverse priority order
-	// regex rule, company rule, user rule order, i.e. user rule overrides take priority over company, etc.
+	// create a slice of rules to check in priority order
+	// user rule order, company rule, regex rule, i.e. user rule overrides take priority over company, etc.
 	regexToCheck := []RuleTemplate{}
 
 	// if a user_id is matching a cohort in any rule, it will have an EntityRuleValues entry in userValues
