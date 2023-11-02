@@ -233,6 +233,12 @@ func UpdateCompaniesBatch(companies []*models.CompanyModel, configurationOption 
 
 // Moesif Middleware
 func MoesifMiddleware(next http.Handler, configurationOption map[string]interface{}) http.Handler {
+	// Call the function to initialize the moesif client and moesif options
+	if apiClient == nil {
+		moesifOption = configurationOption
+		moesifClient(moesifOption)
+	}
+
 	return http.HandlerFunc(func(rw http.ResponseWriter, request *http.Request) {
 		// Buffer
 		var buf bytes.Buffer
@@ -246,12 +252,6 @@ func MoesifMiddleware(next http.Handler, configurationOption map[string]interfac
 			200,
 			multiWriter,
 		)
-
-		// Call the function to initialize the moesif client and moesif options
-		if apiClient == nil {
-			moesifOption = configurationOption
-			moesifClient(moesifOption)
-		}
 
 		// Add transactionId to the headers
 		if !disableTransactionId {
