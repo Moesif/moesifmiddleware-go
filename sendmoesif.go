@@ -19,10 +19,15 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 	// Get Client Ip
 	ip := getClientIp(request)
 
+	uri := request.URL.Scheme + "://" + request.Host + request.URL.Path
+	if request.URL.RawQuery != "" {
+		uri += "?" + request.URL.RawQuery
+	}
+
 	// Prepare request model
 	event_request := models.EventRequestModel{
 		Time:             &reqTime,
-		Uri:              request.URL.Scheme + "://" + request.Host + request.URL.Path,
+		Uri:              uri,
 		Verb:             request.Method,
 		ApiVersion:       apiVersion,
 		IpAddress:        &ip,
@@ -80,7 +85,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 			}
 		}
 	} else {
-		if debug{
+		if debug {
 			log.Println("Skipped Event due to sampling percentage: " + strconv.Itoa(samplingPercentage) + " and random percentage: " + strconv.Itoa(randomPercentage))
 		}
 	}
