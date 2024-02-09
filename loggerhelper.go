@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func contains(arr []string, str string) bool {
@@ -92,4 +93,25 @@ func parseBody(readReqBody []byte, fieldName string) (interface{}, string) {
 		}
 	}
 	return body, bodyEncoding
+}
+
+// getContentLength tries to parse the Content-Length header to an int64.
+// If parsing fails or the header is not present, it uses the length of the provided body slice.
+// Returns a pointer to the determined content length.
+func getContentLength(headers http.Header, body []byte) (contentLength *int64) {
+	if contentLengthStr := headers.Get("Content-Length"); contentLengthStr != "" {
+		parsedLength, err := strconv.ParseInt(contentLengthStr, 10, 64)
+		if err != nil {
+			if debug {
+				log.Printf("Error while parsing content-length: %s.\n", err)
+			}
+		} else {
+			contentLength = &parsedLength
+		}
+	}
+	if contentLength == nil {
+		length := int64(len(body))
+		contentLength = &length
+	}
+	return contentLength
 }

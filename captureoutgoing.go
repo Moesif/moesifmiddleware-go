@@ -65,9 +65,12 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			}
 
 			// Get Request Body
-			var outgoingReqBody interface{}
-			var reqEncoding string
-			outgoingReqBody = nil
+			var (
+				outgoingReqBody  interface{}
+				reqEncoding      string
+				reqContentLength *int64
+			)
+
 			if logBodyOutgoing && request.Body != nil {
 				copyBody, err := request.GetBody()
 				if err != nil {
@@ -83,6 +86,7 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 						log.Printf("Error while reading outgoing request body: %s.\n", reqBodyErr.Error())
 					}
 				}
+				reqContentLength = getContentLength(request.Header, readReqBody)
 
 				// Parse the request Body
 				outgoingReqBody, reqEncoding = parseBody(readReqBody, "Request_Body_Masks")
@@ -93,9 +97,12 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			}
 
 			// Get Response Body
-			var outgoingRespBody interface{}
-			var respEncoding string
-			outgoingRespBody = nil
+			var (
+				outgoingRespBody  interface{}
+				respEncoding      string
+				respContentLength *int64
+			)
+
 			if logBodyOutgoing && response.Body != nil {
 				// Read the response body
 				readRespBody, err := ioutil.ReadAll(response.Body)
@@ -104,6 +111,7 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 						log.Printf("Error while reading outgoing response body: %s.\n", err.Error())
 					}
 				}
+				respContentLength = getContentLength(response.Header, readRespBody)
 
 				// Parse the response Body
 				outgoingRespBody, respEncoding = parseBody(readRespBody, "Response_Body_Masks")
@@ -138,9 +146,9 @@ func (t *Transport) RoundTrip(request *http.Request) (*http.Response, error) {
 			responseHeader = maskHeaders(HeaderToMap(response.Header), "Response_Header_Masks")
 
 			// Send Event To Moesif
-			sendMoesifAsync(request, outgoingReqTime, requestHeader, nil, outgoingReqBody, &reqEncoding, outgoingRspTime, response.StatusCode,
-				responseHeader, outgoingRespBody, &respEncoding, userIdOutgoing, companyIdOutgoing, &sessionTokenOutgoing, metadataOutgoing,
-				&direction)
+			sendMoesifAsync(request, outgoingReqTime, requestHeader, nil, outgoingReqBody, &reqEncoding, reqContentLength,
+				outgoingRspTime, response.StatusCode, responseHeader, outgoingRespBody, &respEncoding, respContentLength,
+				userIdOutgoing, companyIdOutgoing, &sessionTokenOutgoing, metadataOutgoing, &direction)
 
 		} else {
 			if debug {
