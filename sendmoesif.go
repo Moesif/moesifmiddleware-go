@@ -11,8 +11,8 @@ import (
 )
 
 // Send Event to Moesif
-func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[string]interface{}, apiVersion *string, reqBody interface{}, reqEncoding *string,
-	rspTime time.Time, respStatus int, respHeader map[string]interface{}, respBody interface{}, respEncoding *string,
+func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[string]interface{}, apiVersion *string, reqBody interface{}, reqEncoding *string, reqContentLength *int64,
+	rspTime time.Time, respStatus int, respHeader map[string]interface{}, respBody interface{}, respEncoding *string, respContentLength *int64,
 	userId string, companyId string, sessionToken *string, metadata map[string]interface{},
 	direction *string) {
 
@@ -34,6 +34,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 		Headers:          reqHeader,
 		Body:             &reqBody,
 		TransferEncoding: reqEncoding,
+		ContentLength:    reqContentLength,
 	}
 
 	// Prepare response model
@@ -44,6 +45,7 @@ func sendMoesifAsync(request *http.Request, reqTime time.Time, reqHeader map[str
 		Headers:          respHeader,
 		Body:             respBody,
 		TransferEncoding: respEncoding,
+		ContentLength:    respContentLength,
 	}
 
 	// Generate random percentage

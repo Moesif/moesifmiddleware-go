@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-const id = ""
+const id = "eyJhcHAiOiIyNTU6MTExIiwidmVyIjoiMi4wIiwib3JnIjoiMjI4OjI4IiwiaWF0IjoxNjkwODQ4MDAwfQ.tF3LENrTKb4XgeEJORVdL9K0emgpU4-u8K7IE_RSdgg"
 
 func TestGetConfig(t *testing.T) {
 	moesifClient(map[string]interface{}{

@@ -345,6 +345,7 @@ func sendEvent(request *http.Request, response MoesifResponseRecorder, rspBuffer
 			log.Printf("Error while reading request body: %s.\n", reqBodyErr.Error())
 		}
 	}
+	reqContentLength := getContentLength(request.Header, readReqBody)
 
 	// Check if the request body is empty
 	reqBody = nil
@@ -355,6 +356,7 @@ func sendEvent(request *http.Request, response MoesifResponseRecorder, rspBuffer
 	// Get the response body
 	var respBody interface{}
 	var respEncoding string
+	respContentLength := getContentLength(response.Header(), []byte(rspBufferString))
 
 	// Parse the response Body
 	respBody = nil
@@ -393,7 +395,9 @@ func sendEvent(request *http.Request, response MoesifResponseRecorder, rspBuffer
 	responseHeader = maskHeaders(HeaderToMap(response.Header()), "Response_Header_Masks")
 
 	// Send Event To Moesif
-	sendMoesifAsync(request, reqTime, requestHeader, apiVersion, reqBody, &reqEncoding, rspTime, response.status, responseHeader, respBody, &respEncoding, userId, companyId, &sessionToken, metadata, &direction)
+	sendMoesifAsync(request, reqTime, requestHeader, apiVersion, reqBody, &reqEncoding, reqContentLength, 
+		rspTime, response.status, responseHeader, respBody, &respEncoding, respContentLength, 
+		userId, companyId, &sessionToken, metadata, &direction)
 }
 
 // teeBody reads all of b to memory and then returns two equivalent
