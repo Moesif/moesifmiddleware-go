@@ -373,6 +373,96 @@ companies = append(companies, &companyA)
 moesifmiddleware.UpdateCompaniesBatch(companies, moesifOption)
 ```
 
+## Update Subscription
+
+### UpdateSubscription method
+Create or update a subscription profile in Moesif.
+The metadata field can be any subscription demographic or other info you want to store.
+Only the `SubscriptionId` and `CompanyId` fields are required.
+This method is a convenient helper that calls the Moesif API lib.
+For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-a-subscription).
+ 
+```go
+import (
+	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
+)
+
+func literalFieldValue(value string) *string {
+    return &value
+}
+
+var moesifOptions = map[string]interface{} {
+	"Application_Id": "Your Moesif Application Id",
+}
+
+// metadata can be any custom dictionary
+metadata := map[string]interface{}{
+  "plan_name": "Pro",
+  "deal_stage": "Customer",
+  "mrr": 48000,
+  "demographics": map[string]interface{}{
+      "subscription_length": 12,
+      "subscription_type": "annual",
+  },
+}
+
+// Prepare subscription model
+subscription := models.SubscriptionModel{
+	SubscriptionId: "12345",	// Required subscription id
+  CompanyId: "67890",       // Required company id
+	Metadata: &metadata,
+}
+
+// Update Subscription
+moesifmiddleware.UpdateSubscription(&subscription, moesifOptions)
+```
+
+### UpdateSubscriptionsBatch method
+Similar to UpdateSubscription, but used to update a list of subscriptions in one batch. 
+Only the `SubscriptionId` and `CompanyId` fields are required.
+This method is a convenient helper that calls the Moesif API lib.
+For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-subscriptions-in-batch).
+
+```go
+import (
+	moesifmiddleware "github.com/moesif/moesifmiddleware-go"
+)
+
+func literalFieldValue(value string) *string {
+    return &value
+}
+
+var moesifOptions = map[string]interface{} {
+	"Application_Id": "Your Moesif Application Id",
+}
+
+// List of Subscriptions
+var subscriptions []*models.SubscriptionModel
+
+// metadata can be any custom dictionary
+metadata := map[string]interface{}{
+  "plan_name": "Pro",
+  "deal_stage": "Customer",
+  "mrr": 48000,
+  "demographics": map[string]interface{}{
+      "subscription_length": 12,
+      "subscription_type": "annual",
+  },
+}
+
+// Prepare subscription model
+subscriptionA := models.SubscriptionModel{
+	SubscriptionId: "12345",	// Required subscription id
+  CompanyId: "67890",       // Required company id
+	Metadata: &metadata,
+}
+
+subscriptions = append(subscriptions, &subscriptionA)
+
+// Update Subscriptions
+moesifmiddleware.UpdateSubscriptionsBatch(subscriptions, moesifOptions)
+```
+
 ## Example
 
 - An example app with Moesif integration is available __[on GitHub](https://github.com/Moesif/moesifmiddleware-go-example).__
