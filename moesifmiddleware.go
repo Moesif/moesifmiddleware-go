@@ -231,6 +231,41 @@ func UpdateCompaniesBatch(companies []*models.CompanyModel, configurationOption 
 	}
 }
 
+// Update Subscription
+func UpdateSubscription(subscription *models.SubscriptionModel, configurationOption map[string]interface{}) {
+
+	// Call the function to initialize the moesif client and moesif options
+	if apiClient == nil {
+		moesifClient(configurationOption)
+	}
+
+	// Add event to the queue
+	errUpdateSubscription := apiClient.QueueSubscription(subscription)
+	// Log the message
+	if errUpdateSubscription != nil {
+		log.Fatalf("Error while updating subscription: %s.\n", errUpdateSubscription.Error())
+	} else {
+		log.Println("Update Subscription successfully added to the queue")
+	}
+}
+
+// Update Subscriptions Batch
+func UpdateSubscriptionsBatch(subscriptions []*models.SubscriptionModel, configurationOption map[string]interface{}) {
+	// Call the function to initialize the moesif client and moesif options
+	if apiClient == nil {
+		moesifClient(configurationOption)
+	}
+
+	// Add event to the queue
+	errUpdateSubscriptionsBatch := apiClient.QueueSubscriptions(subscriptions)
+	// Log the message
+	if errUpdateSubscriptionsBatch != nil {
+		log.Fatalf("Error while updating subscriptions in batch: %s.\n", errUpdateSubscriptionsBatch.Error())
+	} else {
+		log.Println("Updated subscriptions successfully added to the queue")
+	}
+}
+
 // Moesif Middleware
 func MoesifMiddleware(next http.Handler, configurationOption map[string]interface{}) http.Handler {
 	// Call the function to initialize the moesif client and moesif options
