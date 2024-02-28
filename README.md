@@ -498,7 +498,7 @@ The metadata field can be any subscription demographic or other info you want to
 Only the `SubscriptionId` and `CompanyId` fields are required.
 This method is a convenient helper that calls the Moesif API lib.
 For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-a-subscription).
-
+ 
 ```go
 import (
 	moesifmiddleware "github.com/moesif/moesifmiddleware-go"

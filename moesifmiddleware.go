@@ -232,7 +232,7 @@ func UpdateCompaniesBatch(companies []*models.CompanyModel, configurationOption 
 }
 
 // Update Subscription
-func UpdateSubscription(subscription *models.SubscriptionModel, configurationOption map[string]interface{}) {
+func UpdateSubscription(subscription *models.SubscriptionModel, configurationOption map[string]interface{}) { 
 
 	// Call the function to initialize the moesif client and moesif options
 	if apiClient == nil {
