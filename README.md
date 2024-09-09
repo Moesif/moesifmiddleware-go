@@ -1,31 +1,49 @@
 # Moesif Middleware for Go
+by [Moesif](https://moesif.com), the [API analytics](https://www.moesif.com/features/api-analytics) and [API monetization](https://www.moesif.com/solutions/metered-api-billing) platform.
 
 [![Built For][ico-built-for]][link-built-for]
 [![Software License][ico-license]][link-license]
 [![Source Code][ico-source]][link-source]
 
-Go Middleware that logs API Calls and sends to [Moesif](https://www.moesif.com) for API analytics and log analysis.
+Moesif middleware for Go logs API calls and sends to [Moesif](https://www.moesif.com) for API analytics and log analysis. This middleware allows you to integrate Moesif's API analytics and 
+API monetization features into your Go applications with minimal configuration. 
 
-[Source Code on GitHub](https://github.com/moesif/moesifmiddleware-go)
+> If you're new to Moesif, see [our Getting Started](https://www.moesif.com/docs/) resources to quickly get up and running.
 
-## How to install
-Run the following commands:
+## Prerequisites
+Before using this middleware, make sure you have the following:
 
-`moesifmiddleware-go` can be installed like any other Go library through go get:
+- [An active Moesif account](https://moesif.com/wrap)
+- [A Moesif Application ID](#get-your-moesif-application-id)
+
+### Get Your Moesif Application ID
+After you log into [Moesif Portal](https://www.moesif.com/wrap), you can get your Moesif Application ID during the onboarding steps. You can always access the Application ID any time by following these steps from Moesif Portal after logging in:
+
+1. Select the account icon to bring up the settings menu.
+2. Select **Installation** or **API Keys**.
+3. Copy your Moesif Application ID from the **Collector Application ID** field.
+
+<img class="lazyload blur-up" src="images/app_id.png" width="700" alt="Accessing the settings menu in Moesif Portal">
+
+## Install the Middleware
+Use `go get`:
 
 ```bash
 go get github.com/moesif/moesifmiddleware-go
 ```
 
-Or, if you are already using Go Modules, specify a version number as well:
+If you are using [Go modules](https://go.dev/ref/mod), you can specify a version number as well:
 
 ```bash
 go get github.com/moesif/moesifmiddleware-go@v1.2.3
 ```
 
-## How to use
+## Configure the Middleware
+See the available [configuration options](#configuration-options) to learn how to configure the middleware for your use case.
 
-Add middleware to your application.
+## How to Use
+
+The following snippet shows how to use the middleware:
 
 ```go
 import(
@@ -37,117 +55,645 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 var moesifOptions = map[string]interface{} {
-        "Application_Id": "Your Moesif Application Id",
+        "Application_Id": "YOUR_MOESIF_APPLICATION_ID",
         "Log_Body": true,
 }
 http.Handle("/api", moesifmiddleware.MoesifMiddleware(http.HandlerFunc(handle), moesifOption))
 ```
 
-Your Moesif Application Id can be found in the [_Moesif Portal_](https://www.moesif.com/).
-After signing up for a Moesif account, your Moesif Application Id will be displayed during the onboarding steps. 
+Replace *`YOUR_MOESIF_APPLICATION_ID`* with [your Moesif Application ID](#get-your-moesif-application-id).
 
-## Optional: Capturing outgoing API calls
-In addition to your own APIs, you can also start capturing calls out to third party services via the following method:
+### Optional: Capturing Outgoing API Calls
+In addition to your own APIs, you can also start capturing calls out to third party services through the following method:
 
 ```go
 moesifmiddleware.StartCaptureOutgoing(moesifOption)
 ```
 
-#### `handler func(ResponseWriter, *Request)`
-(__required__), HandlerFunc registers the handler function for the given pattern.
+#### `handler func(ResponseWriter, *Request)` (Required)
 
-#### `moesifOption`
-(__required__), _map[string]interface{}_, are the configuration options for your application. Please find the details below on how to configure options.
+The `handler` function registers the handler function for the given pattern through the `HandlerFunc` adapter. See the [example application code](https://github.com/Moesif/moesifmiddleware-go-example/blob/f3692a169ee0c7e73f109a54f65e28b55c611d01/main.go#L54) for better understanding.
 
-## Configuration options
+#### `moesifOption` (Required)
+A `map[string]interface{}` type containing the configuration options for your application. See [the example application code](https://github.com/Moesif/moesifmiddleware-go-example/blob/f3692a169ee0c7e73f109a54f65e28b55c611d01/moesif_options/moesif_options.go#L111) for better understanding.
 
-### __`Application_Id`__
-(__required__), _string_, is obtained via your Moesif Account, this is required.
-Your Moesif Application Id can be found in the [_Moesif Portal_](https://www.moesif.com/).
-After signing up for a Moesif account, your Moesif Application Id will be displayed during the onboarding steps. 
+See [Configuration Options](#configuration-options) for the common configuration options. See [Options for Logging Outgoing Calls](#options-for-logging-outgoing-calls) for configuration options specific to capturing and logging outgoing API calls.
 
-You can always find your Moesif Application Id at any time by logging 
-into the [_Moesif Portal_](https://www.moesif.com/), click on the top right menu,
-and then clicking _Installation_.
+## Troubleshoot
+For a general troubleshooting guide that can help you solve common problems, see [Server Troubleshooting Guide](https://www.moesif.com/docs/troubleshooting/server-troubleshooting-guide/). 
 
-### __`Should_Skip`__
-(optional) _(request, response) => boolean_, a function that takes a request and a response,
-and returns true if you want to skip this particular event.
+Other troubleshooting supports:
 
-### __`Identify_User`__
-(optional, but highly recommended) _(request, response) => string_, a function that takes a request and response, and returns a string that is the user id used by your system. While Moesif tries to identify users automatically, but different frameworks and your implementation might be very different, it would be helpful and much more accurate to provide this function.
+- [FAQ](https://www.moesif.com/docs/faq/)
+- [Moesif support email](mailto:support@moesif.com)
 
-### __`Identify_Company`__
-(optional) _(request, response) => string_, a function that takes a request and response, and returns a string that is the company id for this event.
+## Configuration Options
+The following sections describe the available configuration options for this middleware. You can set these options in the Moesif initialization options object. See the the [example application code](https://github.com/Moesif/moesifmiddleware-go-example/blob/master/moesif_options/moesif_options.go) to understand how you can specify these options.
 
-### __`Get_Metadata`__
-(optional) _(request, response) => dictionary_, a function that takes a request and response, and
-returns a dictionary (must be able to be encoded into JSON). This allows you
-to associate this event with custom metadata. For example, you may want to save a VM instance_id, a trace_id, or a tenant_id with the request.
+### `Application_Id` (Required)
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    <code>string</code>
+   </td>
+  </tr>
+</table>
 
-### __`Get_Session_Token`__
-(optional) _(request, response) => string_, a function that takes a request and response, and returns a string that is the session token for this event. Moesif tries to get the session token automatically, but if this doesn't work for your service, you should use this to identify sessions.
+A string that [identifies your application in Moesif](#get-your-moesif-application-id).
 
-### __`Request_Header_Masks`__
-(optional) _() => []string_, a function that returns array of strings to mask specific request header fields.
+### `Should_Skip`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>boolean</code>
+   </td>
+  </tr>
+</table>
 
-### __`Request_Body_Masks`__
-(optional) _() => []string_, a function that returns array of strings to mask specific request body fields.
+Optional.
 
-### __`Response_Header_Masks`__
-(optional) _() => []string_, a function that returns array of strings to mask specific response header fields.
+A function that takes a request and a response,
+and returns `true` if you want to skip this particular event.
 
-### __`Response_Body_Masks`__
-(optional) _() => []string_, a function that returns array of strings to mask specific response body fields.
+### `Identify_User`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>string</code>
+   </td>
+  </tr>
+</table>
 
-### __`Debug`__
-(optional) _boolean_, a flag to see debugging messages.
+Optional, but highly recommended.
 
-### __`Log_Body`__
-(optional) _boolean_, Default true. Set to false to remove logging request and response body to Moesif.
+A function that takes a request and a response, and returns a string that represents the user ID used by your system. 
 
-### __`Event_Queue_Size`__  
-(optional) _int_, An optional field name which specify the maximum number of events to hold in queue before sending to Moesif. In case of network issues when not able to connect/send event to Moesif, skips adding new events to the queue to prevent memory overflow. Default value is `10000`.
+Moesif identifies users automatically. However, due to the differences arising from different frameworks and implementations, provide this function to ensure user identification properly.
 
-### __`Batch_Size`__ 
-(optional) _int_, An optional field name which specify the maximum batch size when sending to Moesif. Default value is `200`.
+### `Identify_Company`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>string</code>
+   </td>
+  </tr>
+</table>
 
-### __`Timer_Wake_Up_Seconds`__
-(optional) _int_, An optional field which specifies a time (every n seconds) how often background thread runs to send events to moesif. Default value is `2` seconds.
+Optional. 
 
-## Options for logging outgoing calls
+A function that takes a request and response, and returns a string that represents the company ID for this event.
 
-The options below are applied to outgoing API calls. The request and response objects passed in are [Request](https://golang.org/src/net/http/request.go) request and [Response](https://golang.org/src/net/http/response.go) response objects.
+### `Get_Metadata`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>dictionary</code>
+   </td>
+  </tr>
+</table>
 
-### __`Should_Skip_Outgoing`__
-(optional) _(request, response) => boolean_, a function that takes a request and response, and returns true if you want to skip this particular event.
+Optional.
 
-### __`Identify_User_Outgoing`__
-(optional, but highly recommended) _(request, response) => string_, a function that takes request and response, and returns a string that is the user id used by your system. While Moesif tries to identify users automatically,
-but different frameworks and your implementation might be very different, it would be helpful and much more accurate to provide this function.
+A function that returns an object that allows you to add custom metadata that will be associated with the event. 
 
-### __`Identify_Company_Outgoing`__
-(optional) _(request, response) => string_, a function that takes request and response, and returns a string that is the company id for this event.
+The metadata must be a dictionary that can be converted to JSON. For example, you may want to save a virtual machine instance ID, a trace ID, or a tenant ID with the request.
 
-### __`Get_Metadata_Outgoing`__
-(optional) _(request, response) => dictionary_, a function that takes request and response, and
-returns a dictionary (must be able to be encoded into JSON). This allows
-to associate this event with custom metadata. For example, you may want to save a VM instance_id, a trace_id, or a tenant_id with the request.
+### `Get_Session_Token`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>string</code>
+   </td>
+  </tr>
+</table>
 
-### __`Get_Session_Token_Outgoing`__
-(optional) _(request, response) => string_, a function that takes request and response, and returns a string that is the session token for this event. Again, Moesif tries to get the session token automatically, but if you setup is very different from standard, this function will be very help for tying events together, and help you replay the events.
+Optional.
 
-### __`Log_Body_Outgoing`__
-(optional) _boolean_, Default true. Set to false to remove logging request and response body to Moesif.
+A function that takes a request and response, and returns a string that represents the session token for this event. 
+
+Similar to users and companies, Moesif tries to retrieve session tokens automatically. But if it doesn't work for your service, provide this function to help identify sessions.
+
+### `Request_Header_Masks`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>()</code>
+   </td>
+   <td>
+    <code>[]string</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+A function that returns an array of strings to mask specific request header fields.
+
+### `Request_Body_Masks`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>()</code>
+   </td>
+   <td>
+    <code>[]string</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+A function that returns array of strings to mask specific request body fields.
+
+### `Response_Header_Masks`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>()</code>
+   </td>
+   <td>
+    <code>[]string</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+A function that returns array of strings to mask specific response header fields.
+
+### `Response_Body_Masks`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>()</code>
+   </td>
+   <td>
+    <code>[]string</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+A function that returns array of strings to mask specific response body fields.
+
+### `Debug`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    <code>boolean</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+Set to `true` to see debugging messages. This may help you troubleshoot integration issues.
+
+### `Log_Body`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Default
+   </th>
+  </tr>
+  <tr>
+   <td>
+    <code>boolean</code>
+   </td>
+   <td>
+    <code>true</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+Set to `false` to not log the request and response body to Moesif.
+
+### `Event_Queue_Size`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Default
+   </th>
+  </tr>
+  <tr>
+   <td>
+    <code>int</code>
+   </td>
+   <td>
+    <code>10000</code>
+   </td>
+  </tr>
+</table>
+
+An optional field name that specifies the maximum number of events to hold in queue before sending to Moesif. In case of network issues, the middleware may fail to connect to or send events to Moesif. For those scenarios, this option helps prevent adding new events to the queue to prevent memory overflow.
+
+### `Batch_Size` 
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Default
+   </th>
+  </tr>
+  <tr>
+   <td>
+    <code>int</code>
+   </td>
+   <td>
+    <code>200</code>
+   </td>
+  </tr>
+</table>
+
+An optional field name that specifies the maximum batch size when sending to Moesif.
+
+### `Timer_Wake_Up_Seconds`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Default
+   </th>
+  </tr>
+  <tr>
+   <td>
+    <code>int</code>
+   </td>
+   <td>
+    <code>2</code>
+   </td>
+  </tr>
+</table>
+
+An optional field that specifies a time in seconds how often background thread runs to send events to Moesif.
+
+### Options for Logging Outgoing Calls
+
+The following configuration options apply to outgoing API calls. The request and response objects passed in are [`Request`](https://golang.org/src/net/http/request.go) and [`Response`](https://golang.org/src/net/http/response.go) objects of the Go standard library.
+
+### `Should_Skip_Outgoing`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>boolean</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+A function that takes a request and response, and returns `true` if you want to skip this particular event.
+
+### `Identify_User_Outgoing`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>string</code>
+   </td>
+  </tr>
+</table>
+
+Optional, but highly recommended.
+
+A function that takes a request and a response, and returns a string that represents the user ID used by your system. 
+
+Moesif identifies users automatically. However, due to the differences arising from different frameworks and implementations, provide this function to ensure user identification properly.
+
+### `Identify_Company_Outgoing`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>string</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+A function that takes request and response, and returns a string that represents the company ID for this event.
+
+### `Get_Metadata_Outgoing`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>dictionary</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+A function that returns an object that allows you to add custom metadata that will be associated with the event. 
+
+The metadata must be a dictionary that can be converted to JSON. For example, you may want to save a virtual machine instance ID, a trace ID, or a tenant ID with the request.
+
+### `Get_Session_Token_Outgoing`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Parameters
+   </th>
+   <th scope="col">
+    Return type
+   </th>
+  </tr>
+  <tr>
+   <td>
+    Function
+   </td>
+   <td>
+    <code>(request, response)</code>
+   </td>
+   <td>
+    <code>string</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+A function that takes a request and response, and returns a string that represents the session token for this event. 
+
+Similar to users and companies, Moesif tries to retrieve session tokens automatically. But if it doesn't work for your service, provide this function to help identify sessions and replay them.
+
+### `Log_Body_Outgoing`
+<table>
+  <tr>
+   <th scope="col">
+    Data type
+   </th>
+   <th scope="col">
+    Default
+   </th>
+  </tr>
+  <tr>
+   <td>
+    <code>boolean</code>
+   </td>
+   <td>
+    <code>true</code>
+   </td>
+  </tr>
+</table>
+
+Optional.
+
+Set to `false` to not log the request and response body to Moesif.
+
+## Examples
+
+- [Example Go app that using this middleware](https://github.com/Moesif/moesifmiddleware-go-example)
+- [Example Go app using this middleware and Google Cloud Run functions](https://github.com/Moesif/moesif-gcp-function-go-example)
+
+The following examples demonstrate some common operations:
+
+- [Updating a single user](#updateuser-method)
+- [Updating users in batch](#updateusersbatch-method)
+- [Updating a single company](#updatecompany-method)
+- [Updating companies in batch](#updatecompaniesbatch-method)
+- [Updating a single subscription](#updatesubscription-method)
+- [Updating subscriptions in batch](#updatesubscriptionsbatch-method)
 
 ## Update User
 
-### UpdateUser method
-Create or update a user profile in Moesif.
-The metadata field can be any customer demographic or other info you want to store.
-Only the `UserId` field is required.
-This method is a convenient helper that calls the Moesif API lib.
-For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-a-user).
+### `UpdateUser` Method
+Use this method to create or update a user profile in Moesif.
+
 
 ```go
 import (
@@ -198,11 +744,13 @@ user := models.UserModel{
 moesifmiddleware.UpdateUser(&user, moesifOption)
 ```
 
-### UpdateUsersBatch method
-Similar to UpdateUser, but used to update a list of users in one batch. 
+The `metadata` field can contain any user demographic or other information you want to store.
+
 Only the `UserId` field is required.
-This method is a convenient helper that calls the Moesif API lib.
-For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-users-in-batch).
+This method is a convenient helper that calls the Moesif API library. For more information, see [Moesif Go API documentation](https://www.moesif.com/docs/api?go#update-a-user).
+
+### `UpdateUsersBatch` Method
+Similar to `UpdateUser`, but to update a list of users in one batch. 
 
 ```go
 
@@ -258,14 +806,15 @@ users = append(users, &userA)
 moesifmiddleware.UpdateUsersBatch(users, moesifOption)
 ```
 
+The `metadata` field can contain any company demographic or other information you want to store.
+
+Only the `UserId` field is required.
+This method is a convenient helper that calls the Moesif API library. For more information, see [Moesif Go API documentation](https://www.moesif.com/docs/api?go#update-users-in-batch)
+
 ## Update Company
 
-### UpdateCompany method
-Create or update a company profile in Moesif.
-The metadata field can be any company demographic or other info you want to store.
-Only the `CompanyId` field is required.
-This method is a convenient helper that calls the Moesif API lib.
-For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-a-company).
+### `UpdateCompany` Method
+Use this method to create or update a company profile in Moesif.
 
 ```go
 import (
@@ -314,11 +863,15 @@ company := models.CompanyModel{
 moesifmiddleware.UpdateCompany(&company, moesifOption)
 ```
 
-### UpdateCompaniesBatch method
-Similar to UpdateCompany, but used to update a list of companies in one batch. 
+The metadata field can be any company demographic or other info you want to store.
+
 Only the `CompanyId` field is required.
-This method is a convenient helper that calls the Moesif API lib.
-For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-companies-in-batch).
+
+This method is a convenient helper that calls the Moesif API library. For details, see [Moesif Go API documentation](https://www.moesif.com/docs/api?go#update-a-company).
+
+
+### `UpdateCompaniesBatch` Method
+Similar to `UpdateCompany`, but to update a list of companies in one batch. 
 
 ```go
 
@@ -373,14 +926,16 @@ companies = append(companies, &companyA)
 moesifmiddleware.UpdateCompaniesBatch(companies, moesifOption)
 ```
 
+The metadata field can be any company demographic or other info you want to store.
+
+Only the `CompanyId` field is required.
+
+This method is a convenient helper that calls the Moesif API library. For details, see [Moesif Go API documentation](https://www.moesif.com/docs/api?go#update-companies-in-batch).
+
 ## Update Subscription
 
-### UpdateSubscription method
-Create or update a subscription profile in Moesif.
-The metadata field can be any subscription demographic or other info you want to store.
-Only the `SubscriptionId` and `CompanyId` fields are required.
-This method is a convenient helper that calls the Moesif API lib.
-For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-a-subscription).
+### `UpdateSubscription` Method
+Use this method to create or update a subscription profile in Moesif.
  
 ```go
 import (
@@ -417,11 +972,16 @@ subscription := models.SubscriptionModel{
 moesifmiddleware.UpdateSubscription(&subscription, moesifOptions)
 ```
 
-### UpdateSubscriptionsBatch method
-Similar to UpdateSubscription, but used to update a list of subscriptions in one batch. 
+
+The `metadata` field can be any subscription demographic or other information you want to store.
+
 Only the `SubscriptionId` and `CompanyId` fields are required.
-This method is a convenient helper that calls the Moesif API lib.
-For details, visit the [Go API Reference](https://www.moesif.com/docs/api?go#update-subscriptions-in-batch).
+
+This method is a convenient helper that calls the Moesif API library. For more information, see [Moesif Go API documentation](https://www.moesif.com/docs/api?go#update-a-subscription).
+
+
+### `UpdateSubscriptionsBatch` method
+Similar to `UpdateSubscription`, but to update a list of subscriptions in one batch. 
 
 ```go
 import (
@@ -463,14 +1023,18 @@ subscriptions = append(subscriptions, &subscriptionA)
 moesifmiddleware.UpdateSubscriptionsBatch(subscriptions, moesifOptions)
 ```
 
-## Example
+The `metadata` field can be any subscription demographic or other information you want to store.
 
-- An example app with Moesif integration is available __[on GitHub](https://github.com/Moesif/moesifmiddleware-go-example).__
-- An example for Google Cloud Platform Serverless: __[Google Cloud Functions](https://github.com/Moesif/moesif-gcp-function-go-example)__
+Only the `SubscriptionId` and `CompanyId` fields are required.
 
-## Other integrations
+This method is a convenient helper that calls the Moesif API library. For more information, see [Moesif Go API documentation](https://www.moesif.com/docs/api?go#update-subscriptions-in-batch).
 
-To view more documentation on integration options, please visit __[the Integration Options Documentation](https://www.moesif.com/docs/getting-started/integration-options/).__
+## Explore Other Integrations
+
+Explore other integration options from Moesif:
+
+- [Server integration options documentation](https://www.moesif.com/docs/server-integration//)
+- [Client integration options documentation](https://www.moesif.com/docs/client-integration/)
 
 [ico-built-for]: https://img.shields.io/badge/built%20for-go-blue.svg
 [ico-license]: https://img.shields.io/badge/License-Apache%202.0-green.svg
